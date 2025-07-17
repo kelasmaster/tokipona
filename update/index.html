@@ -36,7 +36,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      position: relative;
     }
     #symbol img {
       width: 96px;
@@ -51,45 +50,6 @@
     .translation {
       font-size: 0.8rem;
       color: #ccc;
-    }
-    .fav-button {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background-color: #222;
-      color: gold;
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-    }
-    #favorites {
-      margin-top: 2rem;
-    }
-    .fav-word {
-      display: inline-block;
-      background-color: #333;
-      color: #fff;
-      border-radius: 16px;
-      padding: 0.3rem 0.7rem;
-      margin: 0.3rem;
-      cursor: pointer;
-      position: relative;
-    }
-    .remove-fav {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background-color: red;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 16px;
-      height: 16px;
-      font-size: 0.8rem;
-      line-height: 14px;
-      cursor: pointer;
     }
     .toggle-btn {
       margin-top: 1rem;
@@ -111,11 +71,8 @@
 
   <div id="symbol"></div>
 
-  <h2>⭐ Favorites</h2>
-  <div id="favorites"></div>
-
   <script>
-     const dictionary = {
+    const dictionary = {
        "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
       "akesi": ["non-cute animal (reptile, amphibian)", "hewan bukan lucu (reptil, amfibi)"],
       "ala": ["no, not, none, un-", "tidak, bukan, tidak ada"],
@@ -242,7 +199,6 @@
     };
 
     let lang = 0; // 0 = English, 1 = Indonesian
-    let favorites = JSON.parse(localStorage.getItem('favorites') || "[]");
 
     function showSymbols() {
       const input = document.getElementById("wordInput").value.trim().toLowerCase();
@@ -260,9 +216,7 @@
           const container = document.createElement("div");
           container.className = "symbol-container";
           const translation = dictionary[word]?.[lang] || "(no translation)";
-          const favStar = favorites.includes(word) ? "★" : "☆";
           container.innerHTML = `
-            <button class="fav-button" onclick="addFavorite('${word}')">${favStar}</button>
             <img src="${url}" alt="${word}">
             <div class="word-label">${word}</div>
             <div class="translation">${translation}</div>
@@ -283,53 +237,10 @@
       });
     }
 
-    function addFavorite(word) {
-      if (!favorites.includes(word)) {
-        favorites.push(word);
-        localStorage.setItem("favorites", JSON.stringify(favorites));
-        updateFavorites();
-        showSymbols(); // refresh stars
-      }
-    }
-
-    function removeFavorite(word) {
-      favorites = favorites.filter(w => w !== word);
-      localStorage.setItem("favorites", JSON.stringify(favorites));
-      updateFavorites();
-      showSymbols(); // refresh stars
-    }
-
-    function updateFavorites() {
-      const favDiv = document.getElementById("favorites");
-      favDiv.innerHTML = "";
-      favorites.forEach(word => {
-        const span = document.createElement("span");
-        span.className = "fav-word";
-        span.textContent = word;
-        span.onclick = () => {
-          document.getElementById("wordInput").value = word;
-          showSymbols();
-        };
-
-        const removeBtn = document.createElement("button");
-        removeBtn.className = "remove-fav";
-        removeBtn.textContent = "×";
-        removeBtn.onclick = (e) => {
-          e.stopPropagation();
-          removeFavorite(word);
-        };
-
-        span.appendChild(removeBtn);
-        favDiv.appendChild(span);
-      });
-    }
-
     function toggleLang() {
       lang = 1 - lang;
       showSymbols();
     }
-
-    updateFavorites();
   </script>
 </body>
 </html>
