@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sitelen Pona Symbol Viewer</title>
+  <title>Toki Pona → Sitelen Pona Symbol</title>
   <style>
     body {
       font-family: sans-serif;
@@ -25,23 +25,29 @@
   </style>
 </head>
 <body>
-  <h1>Toki Pona → Sitelen Pona</h1>
+  <h1>🔤 Toki Pona → Sitelen Pona</h1>
   <p>Type a word (e.g. <code>jan</code>, <code>suno</code>, <code>moku</code>):</p>
   <input type="text" id="wordInput" oninput="showSymbol()">
   <div id="symbol"></div>
 
   <script>
     function showSymbol() {
-      const w = document.getElementById("wordInput").value.trim().toLowerCase();
-      const div = document.getElementById("symbol");
-      if (w === "") {
-        div.innerHTML = "";
+      const word = document.getElementById("wordInput").value.trim().toLowerCase();
+      const symbolDiv = document.getElementById("symbol");
+
+      if (!word) {
+        symbolDiv.innerHTML = "";
         return;
       }
-      const url = `https://sitelen.nimi.li/img/${w}.png`;
+
+      const url = `https://sitelen.nimi.li/img/${word}.png`;
       const img = new Image();
-      img.onload = () => div.innerHTML = `<img src="${url}" alt="${w}">`;
-      img.onerror = () => div.innerHTML = `<p>❓ No symbol found for “${w}”</p>`;
+      img.onload = () => {
+        symbolDiv.innerHTML = `<img src="${url}" alt="${word}"><p>${word}</p>`;
+      };
+      img.onerror = () => {
+        symbolDiv.innerHTML = `<p>❓ No symbol found for "<strong>${word}</strong>"</p>`;
+      };
       img.src = url;
     }
   </script>
