@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Toki Pona Symbol Viewer</title>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 80%;
+      max-width: 400px;
+      outline: none;
+    }
+    #symbol {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .symbol-container img {
+      width: 96px;
+      height: 96px;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label, .translation {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .translation {
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+    .toggle-btn {
+      margin-top: 1rem;
+      margin-right: 0.5rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌌 Toki Pona Symbol Viewer</h1>
+  <p>Type words like <code>jan moku suno</code></p>
+  <input type="text" id="wordInput" oninput="showSymbols()" placeholder="Enter Toki Pona words...">
+  <br>
+  <button class="toggle-btn" onclick="toggleLang()">Switch Language</button>
+  <button class="toggle-btn" onclick="copySymbols()">Copy Symbols</button>
+
+  <div id="symbol"></div>
+
+  <script>
+    const dictionary = {
+      "jan": ["person, human", "orang, manusia"],
+      "moku": ["eat, food", "makan, makanan"],
+      "suno": ["sun, light", "matahari, cahaya"],
+      "pona": ["good, simple", "baik, sederhana"],
+      "kili": ["fruit, vegetable", "buah, sayur"],
+      "telo": ["water, liquid", "air, cairan"],
+      "soweli": ["animal (land)", "hewan darat"],
+      "kulupu": ["group, community", "kelompok, komunitas"],
+      "toki": ["speak, language", "bicara, bahasa"],
+      "ilo": ["tool, device", "alat, perangkat"]
+    };
+
+    let lang = 0; // 0 = English, 1 = Indonesian
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const words = input.split(/\s+/);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        const url = `https://sitelen.nimi.li/img/${word}.png`;
+        const img = new Image();
+        img.src = url;
+        img.alt = word;
+
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          const translation = dictionary[word]?.[lang] || "(no translation)";
+          container.innerHTML = `
+            <img src="${url}" alt="${word}">
+            <div class="word-label">${word}</div>
+            <div class="translation">${translation}</div>
+          `;
+          symbolDiv.appendChild(container);
+        };
+
+        img.onerror = () => {
+          const fallback = document.createElement("div");
+          fallback.className = "symbol-container";
+          fallback.innerHTML = `
+            <div style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#333;border-radius:8px;">❓</div>
+            <div class="word-label">${word}</div>
+            <div class="translation">(symbol not found)</div>
+          `;
+          symbolDiv.appendChild(fallback);
+        };
+      });
+    }
+
+    function toggleLang() {
+      lang = 1 - lang;
+      showSymbols();
+    }
+
+    function copySymbols() {
+      const containers = document.querySelectorAll('.symbol-container');
+      containers.forEach(c => {
+        c.querySelector('.word-label')?.classList.add('hide');
+        c.querySelector('.translation')?.classList.add('hide');
+      });
+
+      html2canvas(document.querySelector("#symbol"), { backgroundColor: null }).then(canvas => {
+        canvas.toBlob(blob => {
+          if (navigator.clipboard && navigator.clipboard.write) {
+            navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+              .then(() => alert("Symbols copied as image!"))
+              .catch(() => alert("Copy failed. You can screenshot manually."));
+          } else {
+            alert("Clipboard not supported. Please screenshot manually.");
+          }
+        });
+
+        // Restore text
+        containers.forEach(c => {
+          c.querySelector('.word-label')?.classList.remove('hide');
+          c.querySelector('.translation')?.classList.remove('hide');
+        });
+      });
+    }
+  </script>
+</body>
+</html>
