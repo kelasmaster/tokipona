@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Toki Pona Symbol Viewer</title>
   <style>
     body {
@@ -77,17 +77,18 @@
       cursor: pointer;
       position: relative;
     }
-    .fav-word .remove {
+    .remove-fav {
       position: absolute;
-      top: -6px;
-      right: -6px;
-      background: red;
+      top: -8px;
+      right: -8px;
+      background-color: red;
       color: white;
       border: none;
       border-radius: 50%;
-      font-size: 0.6rem;
       width: 16px;
       height: 16px;
+      font-size: 0.8rem;
+      line-height: 14px;
       cursor: pointer;
     }
     .toggle-btn {
@@ -103,8 +104,9 @@
 </head>
 <body>
   <h1>🌌 Toki Pona Symbol Viewer</h1>
-  <p>Type Toki Pona words or phrases like <code>jan pona li moku</code></p>
-  <input type="text" id="wordInput" oninput="showSymbols()">
+  <p>Type words like <code>jan moku suno</code></p>
+  <input type="text" id="wordInput" oninput="showSymbols()" placeholder="Enter Toki Pona words...">
+  <br>
   <button class="toggle-btn" onclick="toggleLang()">Switch Language</button>
 
   <div id="symbol"></div>
@@ -258,8 +260,9 @@
           const container = document.createElement("div");
           container.className = "symbol-container";
           const translation = dictionary[word]?.[lang] || "(no translation)";
+          const favStar = favorites.includes(word) ? "★" : "☆";
           container.innerHTML = `
-            <button class="fav-button" onclick="addFavorite('${word}')">★</button>
+            <button class="fav-button" onclick="addFavorite('${word}')">${favStar}</button>
             <img src="${url}" alt="${word}">
             <div class="word-label">${word}</div>
             <div class="translation">${translation}</div>
@@ -285,13 +288,15 @@
         favorites.push(word);
         localStorage.setItem("favorites", JSON.stringify(favorites));
         updateFavorites();
+        showSymbols(); // refresh stars
       }
     }
 
     function removeFavorite(word) {
-      favorites = favorites.filter(f => f !== word);
+      favorites = favorites.filter(w => w !== word);
       localStorage.setItem("favorites", JSON.stringify(favorites));
       updateFavorites();
+      showSymbols(); // refresh stars
     }
 
     function updateFavorites() {
@@ -305,14 +310,16 @@
           document.getElementById("wordInput").value = word;
           showSymbols();
         };
-        const btn = document.createElement("button");
-        btn.className = "remove";
-        btn.textContent = "×";
-        btn.onclick = (e) => {
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "remove-fav";
+        removeBtn.textContent = "×";
+        removeBtn.onclick = (e) => {
           e.stopPropagation();
           removeFavorite(word);
         };
-        span.appendChild(btn);
+
+        span.appendChild(removeBtn);
         favDiv.appendChild(span);
       });
     }
