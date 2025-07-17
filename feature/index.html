@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 80%;
+      max-width: 400px;
+      outline: none;
+    }
+    input:focus {
+      box-shadow: 0 0 5px #00d1ff;
+    }
+    #symbol {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    #symbol img {
+      width: 96px;
+      height: 96px;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .tools {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.3rem;
+    }
+    button.tool-btn {
+      background: none;
+      border: none;
+      color: #00d1ff;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    button.tool-btn:hover {
+      color: #fff;
+    }
+    #favorites {
+      margin-top: 2rem;
+    }
+    .favorite-word {
+      display: inline-block;
+      margin: 0.3rem 0.6rem;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid #00d1ff;
+      border-radius: 8px;
+      background-color: #1e1e1e;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌌 Toki Pona Symbol Viewer</h1>
+  <p>Type Toki Pona words like <code>jan moku suno</code></p>
+  <input type="text" id="wordInput" oninput="showSymbols()" placeholder="Type toki pona...">
+  <div id="symbol"></div>
+
+  <div id="favorites">
+    <h2>⭐ Favorite Words</h2>
+    <div id="favoriteList"></div>
+  </div>
+
+  <script>
+    const dictionary = {
+      jan: "person",
+      moku: "eat, food",
+      suno: "sun, light",
+      kili: "fruit, vegetable",
+      suli: "big, tall",
+      pona: "good, simple",
+      ike: "bad, negative",
+      toki: "talk, language",
+      telo: "water, liquid",
+      soweli: "animal",
+      waso: "bird",
+      mani: "money",
+      ma: "land, place",
+      sijelo: "body",
+      len: "clothes",
+      lawa: "head, control",
+      // Add more words here
+    };
+
+    const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const words = input.split(/\s+/);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        const url = `https://sitelen.nimi.li/img/${word}.png`;
+        const img = new Image();
+        img.src = url;
+        img.alt = word;
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          const translation = dictionary[word] || "Unknown meaning";
+
+          container.innerHTML = `
+            <img src="${url}" alt="${word}">
+            <div class="word-label">${word} – ${translation}</div>
+            <div class="tools">
+              <button class="tool-btn" onclick="speak('${word}')">🔊</button>
+              <button class="tool-btn" onclick="saveFavorite('${word}')">⭐</button>
+            </div>
+          `;
+          symbolDiv.appendChild(container);
+        };
+        img.onerror = () => {
+          const fallback = document.createElement("div");
+          fallback.className = "symbol-container";
+          fallback.innerHTML = `
+            <div style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#333;border-radius:8px;">❓</div>
+            <div class="word-label">${word}</div>
+          `;
+          symbolDiv.appendChild(fallback);
+        };
+      });
+    }
+
+    function speak(word) {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en'; // Toki Pona doesn't have native voices, so use simple phonetic
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function saveFavorite(word) {
+      if (!favorites.includes(word)) {
+        favorites.push(word);
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        renderFavorites();
+      }
+    }
+
+    function renderFavorites() {
+      const list = document.getElementById("favoriteList");
+      list.innerHTML = "";
+      favorites.forEach(word => {
+        const div = document.createElement("div");
+        div.className = "favorite-word";
+        div.textContent = word;
+        list.appendChild(div);
+      });
+    }
+
+    renderFavorites();
+  </script>
+</body>
+</html>
