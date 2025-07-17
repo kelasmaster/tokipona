@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer (with Translation)</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 80%;
+      max-width: 400px;
+      outline: none;
+    }
+    input:focus {
+      box-shadow: 0 0 5px #00d1ff;
+    }
+    #symbol {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 100px;
+    }
+    #symbol img {
+      width: 96px;
+      height: 96px;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label {
+      margin-top: 0.3rem;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .translation {
+      font-size: 0.85rem;
+      color: #9fe69e;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌌 Toki Pona Symbol Viewer</h1>
+  <p>Type words like <code>jan moku suno</code></p>
+  <input type="text" id="wordInput" oninput="showSymbols()">
+  <div id="symbol"></div>
+
+  <script>
+    const dictionary = {
+      jan: "orang",
+      moku: "makan / makanan",
+      suno: "matahari / cahaya",
+      telo: "air / cairan",
+      kili: "buah / sayur",
+      pona: "baik",
+      ike: "buruk",
+      suli: "besar / penting",
+      lili: "kecil",
+      wile: "ingin / perlu",
+      toki: "bicara / bahasa",
+      soweli: "hewan darat",
+      kala: "ikan",
+      waso: "burung",
+      mani: "uang",
+      kasi: "tumbuhan",
+      len: "pakaian",
+      ni: "ini",
+      sina: "kamu",
+      mi: "saya",
+      tomo: "rumah / bangunan",
+      palisa: "tongkat / benda panjang",
+      // Add more as needed
+    };
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const words = input.split(/\s+/);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        const url = `https://sitelen.nimi.li/img/${word}.png`;
+        const img = new Image();
+        img.src = url;
+        img.alt = word;
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          const translation = dictionary[word] || "tidak dikenal";
+          container.innerHTML = `
+            <img src="${url}" alt="${word}">
+            <div class="word-label">${word}</div>
+            <div class="translation">${translation}</div>`;
+          symbolDiv.appendChild(container);
+        };
+        img.onerror = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          container.innerHTML = `
+            <div style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#333;border-radius:8px;">❓</div>
+            <div class="word-label">${word}</div>
+            <div class="translation">tidak dikenal</div>`;
+          symbolDiv.appendChild(container);
+        };
+      });
+    }
+  </script>
+</body>
+</html>
