@@ -2,18 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Toki Pona → Sitelen Pona Symbol</title>
+  <title>Toki Pona → Sitelen Pona (Dark Mode)</title>
   <style>
     body {
-      font-family: sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       padding: 2rem;
     }
     input {
       font-size: 1.5rem;
-      padding: 0.5rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
       width: 60%;
       max-width: 300px;
+      outline: none;
+    }
+    input:focus {
+      box-shadow: 0 0 5px #00d1ff;
     }
     #symbol {
       margin-top: 2rem;
@@ -21,12 +31,17 @@
     #symbol img {
       width: 128px;
       height: 128px;
+      background-color: transparent;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    p {
+      color: #ccc;
     }
   </style>
 </head>
 <body>
-  <h1>🔤 Toki Pona → Sitelen Pona</h1>
-  <p>Type a word (e.g. <code>jan</code>, <code>suno</code>, <code>moku</code>):</p>
+  <h1>🌙 Toki Pona Symbol Viewer</h1>
+  <p>Type a word like <code>jan</code>, <code>moku</code>, or <code>suno</code></p>
   <input type="text" id="wordInput" oninput="showSymbol()">
   <div id="symbol"></div>
 
