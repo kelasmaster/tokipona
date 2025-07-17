@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input, textarea {
+      font-size: 1.3rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 90%;
+      max-width: 500px;
+      margin-bottom: 1rem;
+    }
+    #symbol {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .symbol-container img {
+      width: 20vw;
+      max-width: 96px;
+      height: auto;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label, .translation {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .translation {
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+    .toggle-btn {
+      margin: 0.3rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .hide {
+      display: none;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Toki Pona Symbol Viewer</h1>
+  <p>Type Toki Pona or English/Indonesian words (e.g., <code>jan</code>, <code>orang</code>, <code>food</code>)</p>
+  <textarea id="wordInput" rows="2" oninput="showSymbols()" placeholder="Enter words..."></textarea><br>
+  <button class="toggle-btn" onclick="toggleLang()">Translate: EN / ID</button>
+  <button class="toggle-btn" onclick="toggleSymbolOnly()">Symbol Only</button>
+
+  <div id="symbol"></div>
+
+  <footer>
+    Created by Wahyudi © <span id="year"></span>
+  </footer>
+
+  <script>
+    const dictionary = {
+       "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
+      "akesi": ["non-cute animal (reptile, amphibian)", "hewan bukan lucu (reptil, amfibi)"],
+      "ala": ["no, not, none, un-", "tidak, bukan, tidak ada"],
+      "alasa": ["hunt, forage", "berburu, mencari"],
+      "ale": ["all, every, complete, abundance", "semua, seluruh, lengkap, banyak"],
+      "ali": ["all, every, complete, abundance", "semua, seluruh, lengkap, banyak"],
+      "anpa": ["bowing, low, beneath, defeated", "merunduk, di bawah, kalah"],
+      "ante": ["different, changed, other", "berbeda, berubah, lain"],
+      "anu": ["or (used in questions)", "atau (untuk pertanyaan)"],
+      "awen": ["enduring, kept, safe, staying", "bertahan, tetap, aman"],
+      "e": ["(object marker before direct object)", "(penanda objek)"],
+      "en": ["and (used between nouns)", "dan (antar kata benda)"],
+      "esun": ["market, shop, trade", "pasar, toko, berdagang"],
+      "ijo": ["thing, object, matter", "benda, hal"],
+      "ike": ["bad, negative, wrong, evil", "buruk, jahat"],
+      "ilo": ["tool, device, machine", "alat, mesin"],
+      "insa": ["inside, contents, center", "dalam, isi"],
+      "jaki": ["dirty, gross, toxic", "kotor, menjijikkan"],
+      "jan": ["person, human, somebody", "orang, manusia"],
+      "jelo": ["yellow", "kuning"],
+      "jo": ["have, contain", "memiliki, berisi"],
+      "kala": ["fish, sea creature", "ikan, hewan laut"],
+      "kalama": ["sound, noise", "suara, bunyi"],
+      "kama": ["to come, become, event", "datang, menjadi"],
+      "kasi": ["plant, vegetation", "tanaman"],
+      "ken": ["can, may, possibility", "bisa, mungkin"],
+      "kepeken": ["with, by means of", "dengan, memakai"],
+      "kili": ["fruit, vegetable", "buah, sayuran"],
+      "kin": ["also, too, indeed", "juga, bahkan"],
+      "kipisi": ["to cut", "memotong"],
+      "kiwen": ["hard object, rock, metal", "keras, batu, logam"],
+      "ko": ["semi-solid, paste, powder", "lumpur, pasta, bubuk"],
+      "kon": ["air, breath, spirit", "udara, napas, roh"],
+      "kule": ["color, paint", "warna, cat"],
+      "kulupu": ["group, community", "kelompok, komunitas"],
+      "kute": ["hear, listen", "mendengar"],
+      "la": ["(context marker)", "(penanda konteks)"],
+      "lape": ["sleep, rest", "tidur, istirahat"],
+      "laso": ["blue, green", "biru, hijau"],
+      "lawa": ["head, lead", "kepala, memimpin"],
+      "len": ["clothing, fabric", "pakaian, kain"],
+      "lete": ["cold, uncooked", "dingin, mentah"],
+      "li": ["(verb marker)", "(penanda kata kerja)"],
+      "lili": ["small, little", "kecil"],
+      "linja": ["line, rope", "garis, tali"],
+      "lipu": ["paper, book", "kertas, buku"],
+      "loje": ["red", "merah"],
+      "lon": ["true, present", "benar, ada"],
+      "luka": ["hand, five", "tangan, lima"],
+      "lukin": ["see, look", "melihat"],
+      "lupa": ["hole, opening", "lubang, pintu"],
+      "ma": ["land, country", "tanah, negara"],
+      "mama": ["parent", "orang tua"],
+      "mani": ["money, value", "uang, nilai"],
+      "meli": ["woman", "perempuan"],
+      "mi": ["I, me", "saya, aku"],
+      "mije": ["man", "laki-laki"],
+      "moku": ["eat, food", "makan, makanan"],
+      "moli": ["die, death", "mati"],
+      "monsi": ["back", "belakang"],
+      "mu": ["(animal sound)", "(suara binatang)"],
+      "mun": ["moon, star", "bulan, bintang"],
+      "musi": ["fun, play", "bersenang-senang, bermain"],
+      "mute": ["many, much", "banyak"],
+      "nanpa": ["number", "angka"],
+      "nasa": ["crazy, weird", "gila, aneh"],
+      "nasin": ["way, path", "jalan, cara"],
+      "nena": ["bump, nose", "benjolan, hidung"],
+      "ni": ["this, that", "ini, itu"],
+      "nimi": ["name, word", "nama, kata"],
+      "noka": ["foot, leg", "kaki"],
+      "o": ["hey!", "hai!"],
+      "oko": ["eye", "mata"],
+      "olin": ["love", "cinta"],
+      "ona": ["he, she, they", "dia, mereka"],
+      "open": ["open, begin", "buka, mulai"],
+      "pakala": ["break, damage", "rusak, celaka"],
+      "pali": ["do, make", "melakukan, membuat"],
+      "palisa": ["long stick", "tongkat, batang"],
+      "pan": ["bread, grain", "roti, gandum"],
+      "pana": ["give, release", "memberi, melepaskan"],
+      "pi": ["of (modifier)", "dari (pengelompokan)"],
+      "pilin": ["feel, emotion", "perasaan, hati"],
+      "pimeja": ["black", "hitam"],
+      "pini": ["end, finish", "akhir, selesai"],
+      "pipi": ["insect", "serangga"],
+      "poka": ["side, with", "sisi, dengan"],
+      "poki": ["container", "wadah, kotak"],
+      "pona": ["good, simple", "baik, sederhana"],
+      "sama": ["same, sibling", "sama, saudara"],
+      "seli": ["fire, heat", "api, panas"],
+      "selo": ["outside, skin", "luar, kulit"],
+      "seme": ["what?", "apa?"],
+      "sewi": ["sacred, high", "tinggi, suci"],
+      "sijelo": ["body", "tubuh"],
+      "sike": ["circle, cycle", "lingkaran, siklus"],
+      "sin": ["new, another", "baru, lain"],
+      "sina": ["you", "kamu"],
+      "sinpin": ["front, face", "depan, wajah"],
+      "sitelen": ["image, write", "gambar, menulis"],
+      "sona": ["know, understand", "tahu, mengerti"],
+      "soweli": ["animal (land)", "hewan darat"],
+      "suli": ["big, important", "besar, penting"],
+      "suno": ["sun, light", "matahari, cahaya"],
+      "supa": ["surface, table", "permukaan, meja"],
+      "suwi": ["sweet, cute", "manis, lucu"],
+      "tan": ["from, because", "dari, karena"],
+      "taso": ["but, only", "tapi, hanya"],
+      "tawa": ["go, move", "pergi, bergerak"],
+      "telo": ["water, liquid", "air, cairan"],
+      "tenpo": ["time", "waktu"],
+      "toki": ["speak, language", "bicara, bahasa"],
+      "tomo": ["house, building", "rumah, bangunan"],
+      "tu": ["two", "dua"],
+      "unpa": ["sex", "seks"],
+      "uta": ["mouth", "mulut"],
+      "utala": ["fight", "bertarung"],
+      "walo": ["white", "putih"],
+      "wan": ["one", "satu"],
+      "waso": ["bird", "burung"],
+      "wawa": ["power", "kuat, tenaga"],
+      "weka": ["away, absent", "tidak ada, jauh"],
+      "wile": ["want, need", "ingin, butuh"]
+    };
+
+    const reverseDictionary = {};
+
+    // Build reverse map for English & Indonesian
+    for (const [key, [en, id]] of Object.entries(dictionary)) {
+      en.split(/,\s*/).forEach(word => reverseDictionary[word.toLowerCase()] = key);
+      id.split(/,\s*/).forEach(word => reverseDictionary[word.toLowerCase()] = key);
+    }
+
+    let lang = 0; // 0 = EN, 1 = ID
+    let symbolOnly = false;
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const words = input.split(/\s+/);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        let tokiPonaWord = dictionary[word] ? word : reverseDictionary[word];
+
+        if (!tokiPonaWord) {
+          const notFound = document.createElement("div");
+          notFound.className = "symbol-container";
+          notFound.innerHTML = `<div style="color:#f55;font-weight:bold;">🚫 Word not found: "${word}"</div>`;
+          symbolDiv.appendChild(notFound);
+          return;
+        }
+
+        const url = `https://sitelen.nimi.li/img/${tokiPonaWord}.png`;
+        const img = new Image();
+        img.src = url;
+        img.alt = tokiPonaWord;
+
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+
+          const wordLabel = document.createElement("div");
+          wordLabel.className = "word-label";
+          wordLabel.textContent = tokiPonaWord;
+
+          const trans = document.createElement("div");
+          trans.className = "translation";
+          trans.textContent = dictionary[tokiPonaWord]?.[lang] || "(no translation)";
+
+          if (symbolOnly) {
+            wordLabel.classList.add("hide");
+            trans.classList.add("hide");
+          }
+
+          container.appendChild(img);
+          container.appendChild(wordLabel);
+          container.appendChild(trans);
+          symbolDiv.appendChild(container);
+        };
+
+        img.onerror = () => {
+          const fallback = document.createElement("div");
+          fallback.className = "symbol-container";
+          fallback.innerHTML = `
+            <div style="width:20vw;max-width:96px;height:96px;background:#333;display:flex;align-items:center;justify-content:center;border-radius:8px;">❓</div>
+            ${symbolOnly ? "" : `<div class="word-label">${tokiPonaWord}</div>
+            <div class="translation">(symbol not found)</div>`}
+          `;
+          symbolDiv.appendChild(fallback);
+        };
+      });
+    }
+
+    function toggleLang() {
+      lang = 1 - lang;
+      showSymbols();
+    }
+
+    function toggleSymbolOnly() {
+      symbolOnly = !symbolOnly;
+      const labels = document.querySelectorAll('.word-label, .translation');
+      labels.forEach(el => el.classList.toggle('hide', symbolOnly));
+    }
+
+    // Set current year
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
