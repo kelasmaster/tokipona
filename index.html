@@ -2,24 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Toki Pona Font Demo</title>
-  <link rel="stylesheet" href="https://davidar.github.io/linja-pona/stylesheet.css">
+  <title>Sitelen Pona Symbol Viewer</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 2rem; }
-    .sitelen { font-family: 'linja pona', sans-serif; font-size: 4rem; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 0.5rem;
+      width: 60%;
+      max-width: 300px;
+    }
+    #symbol {
+      margin-top: 2rem;
+    }
+    #symbol img {
+      width: 128px;
+      height: 128px;
+    }
   </style>
 </head>
 <body>
-  <h1>Toki Pona → Sitelen Pona</h1>
-  <p>Type a word, see its symbol:</p>
-  <input id="tp" placeholder="type: jan, suno, moku…" oninput="render()" style="font-size:1.5rem;padding:0.5rem;">
-  <p class="sitelen" id="out"></p>
+  <h1>🧠 Toki Pona → Sitelen Pona</h1>
+  <p>Type a word (e.g. <code>jan</code>, <code>suno</code>, <code>moku</code>):</p>
+  <input type="text" id="wordInput" oninput="showSymbol()">
+  <div id="symbol"></div>
 
-<script>
-function render() {
-  const inpt = document.getElementById('tp').value.trim();
-  document.getElementById('out').textContent = inpt;
-}
-</script>
+  <script>
+    function showSymbol() {
+      const w = document.getElementById("wordInput").value.trim().toLowerCase();
+      const div = document.getElementById("symbol");
+      if (w === "") {
+        div.innerHTML = "";
+        return;
+      }
+      const url = `https://sitelen.nimi.li/img/128/${w}.png`;
+      const img = new Image();
+      img.onload = () => div.innerHTML = `<img src="${url}" alt="${w}">`;
+      img.onerror = () => div.innerHTML = `<p>❓ No symbol found for “${w}”</p>`;
+      img.src = url;
+    }
+  </script>
 </body>
 </html>
