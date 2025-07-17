@@ -30,54 +30,60 @@
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
-      gap: 1.5rem;
+      gap: 1rem;
     }
     .symbol-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 110px;
+      position: relative;
     }
-    .symbol-container img {
+    #symbol img {
       width: 96px;
       height: 96px;
       filter: drop-shadow(0 0 3px #00d1ff);
     }
     .word-label {
       margin-top: 0.3rem;
-      font-size: 1rem;
+      font-size: 0.9rem;
       color: #aaa;
     }
     .translation {
-      font-size: 0.85rem;
-      color: #5cd;
-      margin-top: 0.2rem;
+      font-size: 0.8rem;
+      color: #ccc;
     }
-    .controls {
-      margin-top: 1rem;
-    }
-    .btn {
-      padding: 0.4rem 0.8rem;
-      font-size: 1rem;
-      margin: 0 0.3rem;
+    .fav-button {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: #222;
+      color: gold;
       border: none;
-      border-radius: 6px;
-      background: #1f1f1f;
-      color: #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
       cursor: pointer;
     }
-    .btn:hover {
-      background: #333;
-    }
-    .favorites {
+    #favorites {
       margin-top: 2rem;
-      border-top: 1px solid #444;
-      padding-top: 1rem;
     }
-    .icon-btn {
-      margin-top: 0.3rem;
+    .fav-word {
+      display: inline-block;
+      background-color: #333;
+      color: #fff;
+      border-radius: 16px;
+      padding: 0.3rem 0.7rem;
+      margin: 0.3rem;
       cursor: pointer;
-      font-size: 1.2rem;
+    }
+    .toggle-btn {
+      margin-top: 1rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -85,19 +91,15 @@
   <h1>🌌 Toki Pona Symbol Viewer</h1>
   <p>Type words like <code>jan moku suno</code></p>
   <input type="text" id="wordInput" oninput="showSymbols()">
-  <div class="controls">
-    <button class="btn" onclick="toggleLang()">🌐 Switch to <span id="langLabel">Indonesian</span></button>
-  </div>
+  <button class="toggle-btn" onclick="toggleLang()">Switch Language</button>
   <div id="symbol"></div>
 
-  <div class="favorites">
-    <h3>⭐ Favorite Words</h3>
-    <div id="favoritesList"></div>
-  </div>
+  <h2>⭐ Favorites</h2>
+  <div id="favorites"></div>
 
   <script>
     const dictionary = {
-      "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
+       "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
       "akesi": ["non-cute animal (reptile, amphibian)", "hewan bukan lucu (reptil, amfibi)"],
       "ala": ["no, not, none, un-", "tidak, bukan, tidak ada"],
       "alasa": ["hunt, forage", "berburu, mencari"],
@@ -223,7 +225,7 @@
     };
 
     let lang = 0; // 0 = English, 1 = Indonesian
-    const favorites = [];
+    let favorites = JSON.parse(localStorage.getItem('favorites') || "[]");
 
     function showSymbols() {
       const input = document.getElementById("wordInput").value.trim().toLowerCase();
@@ -233,57 +235,65 @@
 
       words.forEach(word => {
         const url = `https://sitelen.nimi.li/img/${word}.png`;
-        const container = document.createElement("div");
-        container.className = "symbol-container";
-
         const img = new Image();
         img.src = url;
         img.alt = word;
 
-        img.onerror = () => {
-          img.src = ""; // hide if missing
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          const translation = dictionary[word]?.[lang] || "(no translation)";
+          container.innerHTML = `
+            <button class="fav-button" onclick="addFavorite('${word}')">★</button>
+            <img src="${url}" alt="${word}">
+            <div class="word-label">${word}</div>
+            <div class="translation">${translation}</div>
+          `;
+          symbolDiv.appendChild(container);
         };
 
-        const trans = dictionary[word]?.[lang] || "(not found)";
-        container.innerHTML = `
-          <img src="${url}" alt="${word}">
-          <div class="word-label">${word}</div>
-          <div class="translation">${trans}</div>
-          <div>
-            <span class="icon-btn" onclick="playAudio('${word}')">🔊</span>
-            <span class="icon-btn" onclick="addFavorite('${word}')">⭐</span>
-          </div>
-        `;
-        symbolDiv.appendChild(container);
+        img.onerror = () => {
+          const fallback = document.createElement("div");
+          fallback.className = "symbol-container";
+          fallback.innerHTML = `
+            <div style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#333;border-radius:8px;">❓</div>
+            <div class="word-label">${word}</div>
+            <div class="translation">(symbol not found)</div>
+          `;
+          symbolDiv.appendChild(fallback);
+        };
       });
-    }
-
-    function toggleLang() {
-      lang = lang === 0 ? 1 : 0;
-      document.getElementById("langLabel").textContent = lang === 0 ? "Indonesian" : "English";
-      showSymbols();
-      renderFavorites();
-    }
-
-    function playAudio(word) {
-      const audio = new Audio(`https://cdn.jsdelivr.net/gh/ETBCodes/toki-pona-pronunciations/${word}.mp3`);
-      audio.play();
     }
 
     function addFavorite(word) {
       if (!favorites.includes(word)) {
         favorites.push(word);
-        renderFavorites();
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        updateFavorites();
       }
     }
 
-    function renderFavorites() {
-      const div = document.getElementById("favoritesList");
-      div.innerHTML = favorites.map(word => {
-        const trans = dictionary[word]?.[lang] || "(not found)";
-        return `<div>${word} - <i>${trans}</i></div>`;
-      }).join("");
+    function updateFavorites() {
+      const favDiv = document.getElementById("favorites");
+      favDiv.innerHTML = "";
+      favorites.forEach(word => {
+        const span = document.createElement("span");
+        span.className = "fav-word";
+        span.textContent = word;
+        span.onclick = () => {
+          document.getElementById("wordInput").value = word;
+          showSymbols();
+        };
+        favDiv.appendChild(span);
+      });
     }
+
+    function toggleLang() {
+      lang = 1 - lang;
+      showSymbols();
+    }
+
+    updateFavorites();
   </script>
 </body>
 </html>
