@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 80%;
+      max-width: 400px;
+      outline: none;
+    }
+    input:focus {
+      box-shadow: 0 0 5px #00d1ff;
+    }
+    #symbol {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .symbol-container img {
+      width: 96px;
+      height: 96px;
+      filter: drop-shadow(0 0 3px #00d1ff);
+      cursor: pointer;
+    }
+    .word-label {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .translation {
+      font-size: 0.8rem;
+      color: #66bb6a;
+    }
+    .favorite-btn {
+      background: #00d1ff;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    #favorites {
+      margin-top: 2rem;
+      text-align: left;
+      max-width: 600px;
+      margin-inline: auto;
+    }
+    #favorites h3 {
+      margin-bottom: 0.5rem;
+    }
+    .fav-item {
+      display: inline-block;
+      background: #1e1e1e;
+      padding: 6px 10px;
+      border-radius: 12px;
+      margin: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #00d1ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌌 Toki Pona Symbol Viewer</h1>
+  <p>Type words like <code>jan moku suno</code></p>
+  <input type="text" id="wordInput" oninput="showSymbols()">
+  <div id="symbol"></div>
+  <div id="favorites">
+    <h3>❤️ Favorite Words</h3>
+    <div id="favoriteList"></div>
+  </div>
+
+  <script>
+    const dictionary = {
+      "a": "ah! ha! uh! oh! (ekspresi emosional)",
+      "akesi": "hewan tidak lucu (reptil, amfibi)",
+      "ala": "tidak, bukan, tidak ada",
+      "alasa": "berburu, mencari",
+      "ale": "semua, lengkap, berlimpah",
+      "ali": "semua, lengkap, berlimpah (sama dengan 'ale')",
+      "anpa": "merunduk, rendah, kalah",
+      "ante": "berbeda, berubah",
+      "anu": "atau (untuk pertanyaan)",
+      "awen": "tetap, aman, bertahan",
+      "e": "(penanda objek langsung)",
+      "en": "dan (antara kata benda)",
+      "esun": "pasar, toko",
+      "ijo": "benda, hal",
+      "ike": "buruk, jahat, negatif",
+      "ilo": "alat, mesin",
+      "insa": "dalam, isi, tengah",
+      "jaki": "kotor, menjijikkan",
+      "jan": "orang, manusia",
+      "jelo": "kuning",
+      "jo": "punya, berisi",
+      "kala": "ikan",
+      "kalama": "bunyi, suara",
+      "kama": "datang, menjadi",
+      "kasi": "tumbuhan",
+      "ken": "bisa, mungkin",
+      "kepeken": "dengan, memakai",
+      "kili": "buah, sayuran",
+      "kin": "juga, memang",
+      "kipisi": "memotong",
+      "kiwen": "batu, keras",
+      "ko": "bubur, pasta",
+      "kon": "udara, roh, hal tak terlihat",
+      "kule": "warna",
+      "kulupu": "kelompok, komunitas",
+      "kute": "mendengar",
+      "la": "(penanda konteks)",
+      "lape": "tidur, istirahat",
+      "laso": "biru, hijau",
+      "lawa": "kepala, memimpin",
+      "len": "pakaian",
+      "lete": "dingin",
+      "li": "(penanda kata kerja)",
+      "lili": "kecil",
+      "linja": "tali, rambut",
+      "lipu": "kertas, buku",
+      "loje": "merah",
+      "lon": "ada, di",
+      "luka": "tangan, lima",
+      "lukin": "melihat",
+      "lupa": "lubang",
+      "ma": "tanah, negara",
+      "mama": "orang tua",
+      "mani": "uang",
+      "meli": "perempuan",
+      "mi": "saya",
+      "mije": "laki-laki",
+      "moku": "makan",
+      "moli": "mati",
+      "monsi": "belakang",
+      "mu": "(suara hewan)",
+      "mun": "bulan, bintang",
+      "musi": "bersenang-senang",
+      "mute": "banyak",
+      "nanpa": "angka",
+      "nasa": "aneh, mabuk",
+      "nasin": "jalan, cara",
+      "nena": "benjolan, hidung",
+      "ni": "ini, itu",
+      "nimi": "nama, kata",
+      "noka": "kaki",
+      "o": "hai!",
+      "oko": "mata",
+      "olin": "cinta",
+      "ona": "dia",
+      "open": "buka, mulai",
+      "pakala": "rusak, kecelakaan",
+      "pali": "mengerjakan",
+      "palisa": "batang, tongkat",
+      "pan": "roti, gandum",
+      "pana": "beri, kirim",
+      "pi": "dari (pengelompokan)",
+      "pilin": "perasaan",
+      "pimeja": "hitam, gelap",
+      "pini": "selesai",
+      "pipi": "serangga",
+      "poka": "samping",
+      "poki": "wadah",
+      "pona": "baik",
+      "sama": "sama",
+      "seli": "api, panas",
+      "selo": "kulit luar",
+      "seme": "apa?",
+      "sewi": "tinggi, suci",
+      "sijelo": "tubuh",
+      "sike": "lingkaran, tahun",
+      "sin": "baru",
+      "sina": "kamu",
+      "sinpin": "depan, wajah",
+      "sitelen": "gambar, menulis",
+      "sona": "tahu",
+      "soweli": "hewan darat",
+      "suli": "besar",
+      "suno": "matahari",
+      "supa": "permukaan",
+      "suwi": "manis",
+      "tan": "dari, karena",
+      "taso": "tapi, hanya",
+      "tawa": "bergerak",
+      "telo": "air",
+      "tenpo": "waktu",
+      "toki": "bicara",
+      "tomo": "rumah",
+      "tu": "dua",
+      "unpa": "seks",
+      "uta": "mulut",
+      "utala": "berkelahi",
+      "walo": "putih",
+      "wan": "satu",
+      "waso": "burung",
+      "wawa": "kuat",
+      "weka": "jauh",
+      "wile": "ingin"
+    };
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const words = input.split(/\s+/);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        const url = `https://sitelen.nimi.li/img/${word}.png`;
+        const img = new Image();
+        img.src = url;
+        img.alt = word;
+
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          container.innerHTML = `
+            <img src="${url}" alt="${word}" onclick="playAudio('${word}')">
+            <div class="word-label">${word}</div>
+            <div class="translation">${dictionary[word] || '❓'}</div>
+            <button class="favorite-btn" onclick="addFavorite('${word}')">⭐ Favorit</button>
+          `;
+          symbolDiv.appendChild(container);
+        };
+
+        img.onerror = () => {
+          const fallback = document.createElement("div");
+          fallback.className = "symbol-container";
+          fallback.innerHTML = `
+            <div style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#333;border-radius:8px;">❓</div>
+            <div class="word-label">${word}</div>
+            <div class="translation">${dictionary[word] || '❓'}</div>
+          `;
+          symbolDiv.appendChild(fallback);
+        };
+      });
+    }
+
+    function playAudio(word) {
+      const audio = new Audio(`https://tokipona.org/audio/${word}.mp3`);
+      audio.play().catch(e => console.warn("No audio:", word));
+    }
+
+    function addFavorite(word) {
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+      if (!favorites.includes(word)) {
+        favorites.push(word);
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        renderFavorites();
+      }
+    }
+
+    function renderFavorites() {
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+      const favDiv = document.getElementById("favoriteList");
+      favDiv.innerHTML = "";
+      favorites.forEach(word => {
+        const span = document.createElement("span");
+        span.className = "fav-item";
+        span.textContent = word;
+        span.onclick = () => {
+          document.getElementById("wordInput").value = word;
+          showSymbols();
+        };
+        favDiv.appendChild(span);
+      });
+    }
+
+    renderFavorites();
+  </script>
+</body>
+</html>
