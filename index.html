@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toki Pona Vocab App</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      text-align: center;
+      background-color: #f9f9f9;
+    }
+    input {
+      padding: 0.5rem;
+      font-size: 1.2rem;
+      width: 80%;
+      max-width: 300px;
+    }
+    .symbol {
+      margin-top: 2rem;
+    }
+    .symbol img {
+      max-width: 150px;
+    }
+    .not-found {
+      color: #888;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Toki Pona Vocabulary</h1>
+  <p>Type a Toki Pona word:</p>
+  <input type="text" id="wordInput" placeholder="e.g. jan" oninput="showSymbol()">
+
+  <div class="symbol" id="symbolContainer"></div>
+
+  <script>
+    const vocab = {
+      "jan": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Sitelen_pona_-_jan.svg/240px-Sitelen_pona_-_jan.svg.png",
+      "suno": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Sitelen_pona_-_suno.svg/240px-Sitelen_pona_-_suno.svg.png",
+      "moku": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Sitelen_pona_-_moku.svg/240px-Sitelen_pona_-_moku.svg.png",
+      "kili": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Sitelen_pona_-_kili.svg/240px-Sitelen_pona_-_kili.svg.png",
+      "pona": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Sitelen_pona_-_pona.svg/240px-Sitelen_pona_-_pona.svg.png"
+    };
+
+    function showSymbol() {
+      const word = document.getElementById("wordInput").value.trim().toLowerCase();
+      const container = document.getElementById("symbolContainer");
+      container.innerHTML = "";
+      
+      if (vocab[word]) {
+        const img = document.createElement("img");
+        img.src = vocab[word];
+        img.alt = word;
+        container.appendChild(img);
+      } else if (word.length > 0) {
+        container.innerHTML = `<p class='not-found'>No symbol found for "${word}"</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
