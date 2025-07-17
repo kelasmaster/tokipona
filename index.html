@@ -38,7 +38,7 @@
         div.innerHTML = "";
         return;
       }
-      const url = `https://sitelen.nimi.li/img/128/${w}.png`;
+      const url = `https://sitelen.nimi.li/img/${w}.png`;
       const img = new Image();
       img.onload = () => div.innerHTML = `<img src="${url}" alt="${w}">`;
       img.onerror = () => div.innerHTML = `<p>❓ No symbol found for “${w}”</p>`;
