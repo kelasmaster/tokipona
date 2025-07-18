@@ -7,10 +7,12 @@
     :root {
       --bg: #111;
       --text: #eee;
+      --textarea-bg: #222;
     }
     body.light {
-      --bg: #fdfdfd;
-      --text: #111;
+      --bg: #fff;
+      --text: #000;
+      --textarea-bg: #f0f0f0;
     }
     body {
       background: var(--bg);
@@ -18,7 +20,7 @@
       font-family: sans-serif;
       margin: 0;
       padding: 1rem;
-      transition: background 0.3s, color 0.3s;
+      transition: all 0.3s;
     }
     h1 {
       text-align: center;
@@ -30,7 +32,7 @@
       margin: 1rem auto;
       padding: 1rem;
       font-size: 1rem;
-      background: #222;
+      background: var(--textarea-bg);
       color: var(--text);
       border: none;
       border-radius: 8px;
@@ -42,7 +44,7 @@
     button {
       margin: 0.2rem;
       padding: 0.5rem 1rem;
-      background: #333;
+      background: #444;
       color: white;
       border: none;
       border-radius: 6px;
@@ -53,24 +55,24 @@
       flex-wrap: wrap;
       justify-content: center;
       align-items: center;
-      gap: 20px;
+      gap: 10px;
       margin: 2rem auto;
       max-width: 90%;
     }
     .symbol-item {
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .symbol-item img {
       width: 80px;
       height: 80px;
       object-fit: contain;
-      display: block;
-      margin: auto;
     }
     .symbol-item p {
-      margin: 0.5rem 0 0 0;
+      margin: 0.3rem;
       font-size: 0.9rem;
-      color: var(--text);
+      text-align: center;
     }
     footer {
       text-align: center;
@@ -89,12 +91,11 @@
     <button onclick="toggleSymbolOnly()">Symbol Only</button>
     <button onclick="toggleStyle()">Style: Sitelen Pona / Sitelen Sitelen</button>
     <button onclick="toggleDark()">Toggle Dark Mode</button>
-    <button onclick="downloadImage()">Download PNG</button>
+    <button onclick="downloadSymbolOnly('png')">Download Symbols Only (PNG)</button>
+    <button onclick="downloadSymbolOnly('jpg')">Download Symbols Only (JPG)</button>
   </div>
 
-  <div id="symbolResultWrapper">
-    <div id="symbolResult"></div>
-  </div>
+  <div id="symbolResult"></div>
 
   <footer>Created by Wahyudi © <span id="year"></span></footer>
 
@@ -102,7 +103,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
-    const dictionary = {
+   const dictionary = {
        "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
       "akesi": ["non-cute animal (reptile, amphibian)", "hewan bukan lucu (reptil, amfibi)"],
       "ala": ["no, not, none, un-", "tidak, bukan, tidak ada"],
@@ -838,6 +839,7 @@
   "toki luka Sonko": ["Chinese Sign Language", "bahasa isyarat Tiongkok"]  
     };
 
+
     const reverseDict = {};
     for (const [tp, [en, id]] of Object.entries(dictionary)) {
       en.split(",").forEach(w => reverseDict[w.trim()] = tp);
@@ -859,27 +861,24 @@
         const toki = dictionary[word] ? word : reverseDict[word];
         if (!toki) return;
 
+        const container = document.createElement("div");
+        container.className = "symbol-item";
+
         const img = document.createElement("img");
         img.alt = toki;
+        img.src = (style === 'pona')
+          ? `https://sitelen.nimi.li/img/${toki}.png`
+          : `https://nimi.li/internal/api/ss?word=${toki}`;
 
-        if (style === 'pona') {
-          img.src = `https://sitelen.nimi.li/img/${toki}.png`;
-        } else {
-          img.src = `https://nimi.li/internal/api/ss?word=${toki}`;
-        }
-
-        const item = document.createElement("div");
-        item.className = "symbol-item";
-        item.appendChild(img);
+        container.appendChild(img);
 
         if (!symbolOnly) {
-          const label = document.createElement("p");
-          const translation = dictionary[toki] ? dictionary[toki][lang] : '';
-          label.textContent = `${toki} — ${translation}`;
-          item.appendChild(label);
+          const caption = document.createElement("p");
+          caption.textContent = dictionary[toki]?.[lang] || toki;
+          container.appendChild(caption);
         }
 
-        result.appendChild(item);
+        result.appendChild(container);
       });
     }
 
@@ -901,15 +900,33 @@
     function toggleDark() {
       dark = !dark;
       document.body.className = dark ? "dark" : "light";
+      renderSymbols();
     }
 
-    function downloadImage() {
-      const wrapper = document.getElementById("symbolResultWrapper");
-      html2canvas(wrapper, { backgroundColor: null }).then(canvas => {
+    function downloadSymbolOnly(format = 'png') {
+      const original = document.getElementById("symbolResult");
+
+      // Clone symbolResult only with images (no text)
+      const clone = original.cloneNode(true);
+      const captions = clone.querySelectorAll("p");
+      captions.forEach(p => p.remove());
+
+      clone.style.background = "#ffffff";
+      clone.style.padding = "20px";
+      clone.style.display = "flex";
+      clone.style.flexWrap = "wrap";
+      clone.style.justifyContent = "center";
+      clone.style.gap = "20px";
+      clone.style.borderRadius = "12px";
+
+      document.body.appendChild(clone);
+
+      html2canvas(clone, { backgroundColor: "#ffffff" }).then(canvas => {
         const link = document.createElement('a');
-        link.download = 'toki-pona-symbols.png';
-        link.href = canvas.toDataURL('image/png');
+        link.download = `toki-pona-symbols.${format}`;
+        link.href = canvas.toDataURL(`image/${format === 'jpg' ? 'jpeg' : 'png'}`);
         link.click();
+        document.body.removeChild(clone);
       });
     }
 
