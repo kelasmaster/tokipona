@@ -101,13 +101,13 @@
   <textarea id="wordInput" rows="2" oninput="showSymbols()" placeholder="Enter words..."></textarea><br>
   <button class="toggle-btn" onclick="toggleLang()">Translate: EN / ID</button>
   <button class="toggle-btn" onclick="toggleSymbolOnly()">Symbol Only</button>
-  <button class="toggle-btn" onclick="toggleSymbolStyle()">Switch Symbol Style: Sitelen Pona / Sitelen Sitelen</button>
-  <button class="toggle-btn" onclick="toggleDarkMode()">Toggle Dark/Light Mode</button>
+  <button class="toggle-btn" onclick="toggleSymbolStyle()">Switch Symbol Style</button>
+  <button class="toggle-btn" onclick="toggleDarkMode()">Toggle Dark/Light</button>
 
   <div id="symbol"></div>
 
   <footer>
-    Created by Wahyudi © <span id="year"></span>
+    Created by © <span id="year"></span>
   </footer>
 
   <script>
@@ -808,7 +808,7 @@
 
           const trans = document.createElement("div");
           trans.className = "translation";
-          trans.textContent = dictionary[tokiPonaWord]?.[lang] || "(no translation)";
+          trans.textContent = dictionary[tokiPonaWord][lang];
 
           if (symbolOnly) {
             wordLabel.classList.add("hide");
@@ -852,16 +852,13 @@
 
     function toggleDarkMode() {
       document.body.classList.toggle('light-mode');
-      // Save preference to localStorage
-      const isLight = document.body.classList.contains('light-mode');
-      localStorage.setItem('lightMode', isLight);
+      localStorage.setItem('lightMode', document.body.classList.contains('light-mode'));
     }
 
-    // Check for saved preference
+    // Initialize
     if (localStorage.getItem('lightMode') === 'true') {
       document.body.classList.add('light-mode');
     }
-
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </body>
