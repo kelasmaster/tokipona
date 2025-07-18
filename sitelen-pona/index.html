@@ -2,99 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Toki Pona Viewer</title>
+  <title>Toki Pona Symbols</title>
   <style>
     :root {
       --bg: #111;
       --text: #eee;
-      --card: #222;
       --accent: #00ccff;
     }
     body.light {
       --bg: #fdfdfd;
       --text: #111;
-      --card: #fff;
-      --accent: #888;
     }
     body {
-      background-color: var(--bg);
+      background: var(--bg);
       color: var(--text);
       font-family: sans-serif;
       margin: 0;
-      padding: 2rem 1rem;
-      transition: all 0.3s ease;
+      padding: 1rem;
+      transition: all 0.3s;
     }
     h1 {
-      margin-bottom: 1rem;
+      text-align: center;
     }
     textarea {
+      display: block;
       width: 90%;
       max-width: 600px;
+      margin: 1rem auto;
       padding: 1rem;
-      font-size: 1.1rem;
-      background-color: var(--card);
-      border: none;
-      border-radius: 10px;
+      font-size: 1rem;
+      background: #222;
       color: var(--text);
-      margin-bottom: 1rem;
+      border: none;
+      border-radius: 8px;
     }
     .controls {
-      margin: 1rem auto;
+      text-align: center;
+      margin-bottom: 1rem;
     }
     button {
-      margin: 0.3rem;
+      margin: 0.2rem;
       padding: 0.5rem 1rem;
-      border-radius: 8px;
-      border: 1px solid #555;
-      background-color: var(--card);
-      color: var(--text);
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
-    #symbol {
-      margin-top: 2rem;
+    #symbolResult {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 1rem;
-    }
-    .symbol-container {
-      display: flex;
-      flex-direction: column;
       align-items: center;
+      gap: 10px;
+      margin: 2rem auto;
+      max-width: 90%;
     }
-    .symbol-container img {
+    #symbolResult img {
       width: 80px;
       height: 80px;
       object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 0 5px var(--accent);
-      background: var(--card);
-    }
-    .label, .translation {
-      font-size: 0.8rem;
-      margin-top: 0.2rem;
     }
     footer {
-      margin-top: 3rem;
+      text-align: center;
       font-size: 0.8rem;
       color: gray;
+      margin-top: 3rem;
     }
   </style>
 </head>
 <body class="dark">
-  <h1>Toki Pona Symbol Viewer</h1>
-  <textarea id="wordInput" placeholder="Type Toki Pona, English, or Indonesian word..." oninput="showSymbols()"></textarea>
-  
+  <h1>Toki Pona Symbols</h1>
+  <textarea id="wordInput" placeholder="Type Toki Pona, English, or Indonesian..." oninput="renderSymbols()"></textarea>
+
   <div class="controls">
     <button onclick="toggleLang()">Translate: EN/ID</button>
     <button onclick="toggleSymbolOnly()">Symbol Only</button>
     <button onclick="toggleStyle()">Style: Sitelen Pona / Sitelen Sitelen</button>
     <button onclick="toggleDark()">Toggle Dark Mode</button>
+    <button onclick="downloadImage()">Download PNG</button>
   </div>
 
-  <div id="symbol"></div>
+  <div id="symbolResult"></div>
 
   <footer>Created by Wahyudi © <span id="year"></span></footer>
+
+  <!-- html2canvas for screenshot -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
     const dictionary = {
@@ -844,23 +838,15 @@
     let style = 'pona';
     let dark = true;
 
-    function showSymbols() {
+    function renderSymbols() {
       const input = document.getElementById("wordInput").value.trim().toLowerCase();
       const words = input.split(/\s+/);
-      const symbol = document.getElementById("symbol");
-      symbol.innerHTML = "";
+      const result = document.getElementById("symbolResult");
+      result.innerHTML = "";
 
       words.forEach(word => {
-        const container = document.createElement("div");
-        container.className = "symbol-container";
-
         const toki = dictionary[word] ? word : reverseDict[word];
-
-        if (!toki) {
-          container.innerHTML = `<div style="color:red">Not found: ${word}</div>`;
-          symbol.appendChild(container);
-          return;
-        }
+        if (!toki) return;
 
         const img = document.createElement("img");
         img.alt = toki;
@@ -871,42 +857,38 @@
           img.src = `https://nimi.li/internal/api/ss?word=${toki}`;
         }
 
-        container.appendChild(img);
-
-        if (!symbolOnly) {
-          const label = document.createElement("div");
-          label.className = "label";
-          label.textContent = toki;
-          container.appendChild(label);
-
-          const trans = document.createElement("div");
-          trans.className = "translation";
-          trans.textContent = dictionary[toki][lang];
-          container.appendChild(trans);
-        }
-
-        symbol.appendChild(container);
+        result.appendChild(img);
       });
     }
 
     function toggleLang() {
       lang = 1 - lang;
-      showSymbols();
+      renderSymbols();
     }
 
     function toggleSymbolOnly() {
       symbolOnly = !symbolOnly;
-      showSymbols();
+      renderSymbols();
     }
 
     function toggleStyle() {
       style = (style === 'pona') ? 'sitelen' : 'pona';
-      showSymbols();
+      renderSymbols();
     }
 
     function toggleDark() {
       dark = !dark;
       document.body.className = dark ? "dark" : "light";
+    }
+
+    function downloadImage() {
+      const result = document.getElementById("symbolResult");
+      html2canvas(result, { backgroundColor: null }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'toki-pona-symbols.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
     }
 
     document.getElementById("year").textContent = new Date().getFullYear();
