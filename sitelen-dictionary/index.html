@@ -36,8 +36,8 @@
     #symbol {
       margin-top: 1.5rem;
       display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: center;
       gap: 1rem;
     }
     .symbol-container {
@@ -47,9 +47,9 @@
       margin: 0.5rem;
     }
     .symbol-container img {
-      width: 20vw;
-      max-width: 96px;
-      height: auto;
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
       filter: drop-shadow(0 0 3px #00d1ff);
     }
     .word-label, .translation {
@@ -131,10 +131,20 @@
       "awen": ["stay/wait", "tunggu/tetap"],
       "e": ["(object marker)", "(penanda objek)"],
       "en": ["and", "dan"],
+      "ilo": ["tool/device", "alat/perangkat"],
+      "sona": ["knowledge", "pengetahuan"],
       "ilo sona": ["computer", "komputer"],
+      "jan": ["person", "orang"],
+      "pona": ["good", "baik"],
       "jan pona": ["friend", "teman"],
+      "tomo": ["building", "bangunan"],
+      "tawa": ["go/move", "pergi/bergerak"],
       "tomo tawa": ["car", "mobil"],
+      "telo": ["water", "air"],
+      "nasa": ["strange", "aneh"],
       "telo nasa": ["alcohol", "alkohol"],
+      "moku": ["food/eat", "makanan/makan"],
+      "lili": ["small", "kecil"],
       "moku lili": ["snack", "makanan ringan"]
     };
 
@@ -144,24 +154,9 @@
       // Add both single words and phrases to reverse dictionary
       en.split(/,\s*/).forEach(word => {
         reverseDictionary[word.toLowerCase()] = key;
-        // Also add multi-word phrases split by spaces
-        if (word.includes(' ')) {
-          word.split(' ').forEach(w => {
-            if (!reverseDictionary[w.toLowerCase()]) {
-              reverseDictionary[w.toLowerCase()] = key;
-            }
-          });
-        }
       });
       id.split(/,\s*/).forEach(word => {
         reverseDictionary[word.toLowerCase()] = key;
-        if (word.includes(' ')) {
-          word.split(' ').forEach(w => {
-            if (!reverseDictionary[w.toLowerCase()]) {
-              reverseDictionary[w.toLowerCase()] = key;
-            }
-          });
-        }
       });
     }
 
@@ -174,12 +169,16 @@
       const symbolDiv = document.getElementById("symbol");
       symbolDiv.innerHTML = "";
 
+      if (!input) return;
+
       // First check for exact phrase matches
-      const exactMatch = Object.keys(dictionary).find(tpPhrase => 
-        input === tpPhrase.toLowerCase() || 
-        dictionary[tpPhrase][0].toLowerCase() === input ||
-        dictionary[tpPhrase][1].toLowerCase() === input
-      );
+      const exactMatch = Object.keys(dictionary).find(tpPhrase => {
+        const lowerPhrase = tpPhrase.toLowerCase();
+        const [en, id] = dictionary[tpPhrase];
+        return input === lowerPhrase || 
+               input === en.toLowerCase() || 
+               input === id.toLowerCase();
+      });
 
       if (exactMatch) {
         displaySymbols(exactMatch.split(' '), exactMatch);
@@ -224,16 +223,17 @@
           return;
         }
 
-        const img = new Image();
+        const container = document.createElement("div");
+        container.className = "symbol-container";
+
+        const img = document.createElement("img");
+        img.alt = word;
+        
         if (symbolStyle === 'pona') {
           img.src = `https://sitelen.nimi.li/img/${word}.png`;
         } else {
           img.src = `https://nimi.li/internal/api/ss?word=${word}`;
         }
-        img.alt = word;
-
-        const container = document.createElement("div");
-        container.className = "symbol-container";
 
         const wordLabel = document.createElement("div");
         wordLabel.className = "word-label";
@@ -249,7 +249,7 @@
 
         img.onerror = () => {
           container.innerHTML = `
-            <div style="width:20vw;max-width:96px;height:96px;background:#333;display:flex;align-items:center;justify-content:center;border-radius:8px;">❓</div>
+            <div style="width:96px;height:96px;background:#333;display:flex;align-items:center;justify-content:center;border-radius:8px;">❓</div>
             ${symbolOnly ? "" : `<div class="word-label">${word}</div>`}
           `;
         };
