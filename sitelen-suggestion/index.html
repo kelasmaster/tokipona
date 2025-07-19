@@ -16,7 +16,7 @@
       background-color: #f5f5f5;
       color: #333;
     }
-    input, textarea {
+    input {
       font-size: 1.3rem;
       padding: 0.8rem;
       border-radius: 8px;
@@ -28,7 +28,7 @@
       margin-bottom: 1rem;
       transition: background-color 0.3s, color 0.3s;
     }
-    .light-mode input, .light-mode textarea {
+    .light-mode input {
       background-color: #fff;
       color: #333;
       border: 1px solid #ddd;
@@ -109,21 +109,7 @@
   
   <input list="tokiPonaWords" id="wordInput" placeholder="Enter words..." oninput="showSymbols()">
   <datalist id="tokiPonaWords">
-    <option value="ilo sona">computer</option>
-    <option value="jan pona">friend</option>
-    <option value="tomo tawa">car</option>
-    <option value="telo nasa">alcohol</option>
-    <option value="moku lili">snack</option>
-    <option value="toki pona">hello</option>
-    <option value="a">ah!</option>
-    <option value="ale">everything</option>
-    <option value="jan">person</option>
-    <option value="pona">good</option>
-    <option value="moku">food</option>
-    <option value="telo">water</option>
-    <option value="suno">sun</option>
-    <option value="mun">moon</option>
-    <option value="ma">land</option>
+    <!-- Multi-word Toki Pona phrases will be added here -->
   </datalist>
   
   <br>
@@ -636,10 +622,27 @@
   "yupekosi": ["change a creative work and unintentionally make it worse", "mengubah karya kreatif dan tidak sengaja membuatnya lebih buruk"]
     };
 
+    // Initialize datalist with multi-word Toki Pona phrases
+    function initDatalist() {
+      const datalist = document.getElementById("tokiPonaWords");
+      datalist.innerHTML = "";
+      
+      // Get all multi-word Toki Pona phrases from dictionary
+      const multiWordPhrases = Object.keys(dictionary).filter(phrase => 
+        phrase.includes(" ")
+      );
+      
+      // Add them to datalist
+      multiWordPhrases.forEach(phrase => {
+        const option = document.createElement("option");
+        option.value = phrase;
+        datalist.appendChild(option);
+      });
+    }
+
     // Create reverse dictionary for English/Indonesian lookups
     const reverseDictionary = {};
     for (const [key, [en, id]] of Object.entries(dictionary)) {
-      // Add both single words and phrases to reverse dictionary
       en.split(/,\s*/).forEach(word => {
         reverseDictionary[word.toLowerCase()] = key;
       });
@@ -781,6 +784,7 @@
       document.body.classList.add('light-mode');
     }
     document.getElementById("year").textContent = new Date().getFullYear();
+    initDatalist();
   </script>
 </body>
 </html>
