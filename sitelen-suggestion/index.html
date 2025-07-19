@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.light-mode {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    input, textarea {
+      font-size: 1.3rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 90%;
+      max-width: 500px;
+      margin-bottom: 1rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .light-mode input, .light-mode textarea {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    #symbol {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0.5rem;
+    }
+    .symbol-container img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label, .translation {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+      transition: color 0.3s;
+    }
+    .light-mode .word-label, .light-mode .translation {
+      color: #666;
+    }
+    .translation {
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+    .light-mode .translation {
+      color: #777;
+    }
+    .toggle-btn {
+      margin: 0.3rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .light-mode .toggle-btn {
+      background-color: #ddd;
+      color: #333;
+    }
+    .hide {
+      display: none;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #777;
+      transition: color 0.3s;
+    }
+    .light-mode footer {
+      color: #555;
+    }
+    .phrase-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Toki Pona Symbol Viewer</h1>
+  <p>Type Toki Pona or English/Indonesian words (e.g., <code>ilo sona</code>, <code>computer</code>, <code>orang</code>)</p>
+  
+  <input list="tokiPonaWords" id="wordInput" placeholder="Enter words..." oninput="showSymbols()">
+  <datalist id="tokiPonaWords">
+    <option value="ilo sona">computer</option>
+    <option value="jan pona">friend</option>
+    <option value="tomo tawa">car</option>
+    <option value="telo nasa">alcohol</option>
+    <option value="moku lili">snack</option>
+    <option value="toki pona">hello</option>
+    <option value="a">ah!</option>
+    <option value="ale">everything</option>
+    <option value="jan">person</option>
+    <option value="pona">good</option>
+    <option value="moku">food</option>
+    <option value="telo">water</option>
+    <option value="suno">sun</option>
+    <option value="mun">moon</option>
+    <option value="ma">land</option>
+  </datalist>
+  
+  <br>
+  <button class="toggle-btn" onclick="toggleLang()">Translate: EN / ID</button>
+  <button class="toggle-btn" onclick="toggleSymbolOnly()">Symbol Only</button>
+  <button class="toggle-btn" onclick="toggleSymbolStyle()">Symbol Style</button>
+  <button class="toggle-btn" onclick="toggleDarkMode()">Dark/Light</button>
+
+  <div id="symbol"></div>
+
+  <footer>
+    Created by © <span id="year"></span>
+  </footer>
+
+  <script>
+    // Dictionary with multi-word phrases
+    const dictionary = {
+  "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
+  "akesi": ["reptile, frog", "reptil, katak"],
+  "akesi kiwen": ["turtle", "kura-kura"],
+  "akesi linja": ["snake", "ular"],
+  "akesi seli": ["dragon", "naga"],
+  "ala": ["none, not, zero, no, nothing, neither", "tidak ada, bukan, nol, tidak, tidak ada apa-apa, tidak keduanya"],
+  "alasa": ["hunt, hunting, search, pursuit, pursue, gather, finding, seek, explore", "berburu, pencarian, mengejar, mengumpulkan, menemukan, mencari, menjelajah"],
+  "alasa kala": ["fishing", "memancing"],
+  "ale": ["every, everything, all, entire, universal, completely, total, entirely, universe, altogether, comprehensive", "setiap, segala sesuatu, semua, seluruh, universal, sepenuhnya, total, seluruhnya, alam semesta, seluruhnya, komprehensif"],
+  "ale la": ["overall", "secara keseluruhan"],
+  "anpa": ["down, bottom, lower, defeat, below, beneath", "bawah, dasar, lebih rendah, kekalahan, di bawah, di bawahnya"],
+  "ante": ["changing, other, different, alter, modify, alternative, change, convert, edit, difference, transformation, distinct, differently, vary, transform, variation, contrast, distinction, replace, switch, another, else, conversion, adjustment", "berubah, lain, berbeda, mengubah, memodifikasi, alternatif, perubahan, mengkonversi, mengedit, perbedaan, transformasi, berbeda, secara berbeda, bervariasi, mentransformasi, variasi, kontras, perbedaan, mengganti, beralih, yang lain, lainnya, konversi, penyesuaian"],
+  "ante la": ["otherwise", "jika tidak"],
+  "anu": ["or, whether, choice", "atau, apakah, pilihan"],
+  "awen": ["wait, await, stay, preserve, remain, sustain, retain, defend, endure, continued, continue, secure, continuing, save, protect, keep, still, reserve, protection, remaining, continuous, stability, maintain, safe, security, stable, protective, constant, defence, left (remaining)", "menunggu, bertahan, tetap, melestarikan, bertahan, mempertahankan, mempertahankan, membela, bertahan, terus, melanjutkan, aman, melanjutkan, menyimpan, melindungi, menjaga, masih, cadangan, perlindungan, tersisa, terus-menerus, stabilitas, mempertahankan, aman, keamanan, stabil, protektif, konstan, pertahanan, tersisa"],
+  "awen sona": ["remember", "mengingat"],
+  "en": ["and, plus", "dan, tambah"],
+  "epiku": ["epic", "epik"],
+  "esun": ["trading, trade, shopping, deal, commerce, sales, purchase, buy, transaction, market, sale, exchange, sell, retail, business, shop", "perdagangan, belanja, kesepakatan, bisnis, penjualan, pembelian, transaksi, pasar, penjualan, pertukaran, ritel, toko"],
+  "ijo": ["item, something, object, stuff, thing, entity, phenomenon, material, matter (n), substance, anything", "barang, sesuatu, benda, barang, fenomena, materi, zat, apapun"],
+  "ijo esun": ["commodity", "komoditas"],
+  "ijo pana": ["gift", "hadiah"],
+  "ike": ["bad, harsh, badly, mean (adj), evil, negative, problem, horrible, terrible, unfortunate, poorly, offensive, awful, trouble, tragic, cruel, wrong, complexity, issue, inappropriate", "buruk, kasar, jahat, negatif, masalah, mengerikan, mengganggu, tidak pantas"],
+  "ike la": ["unfortunately, sadly", "sayangnya"],
+  "ike lukin": ["ugly", "jelek"],
+  "ilo": ["tool, device, equipment, machine, app, hardware, robot, technological, mechanical, gear, tech, mechanism, technical, software", "alat, perangkat, peralatan, mesin, aplikasi, perangkat keras, robot, teknologi, mekanis, perlengkapan, mekanisme, teknis, perangkat lunak"],
+  "ilo kalama": ["radio, bell", "radio, lonceng"],
+  "ilo kipisi": ["knife", "pisau"],
+  "ilo moku": ["fork", "garpu"],
+  "ilo musi": ["toy", "mainan"],
+  "ilo open": ["key", "kunci"],
+  "ilo pi sitelen tawa": ["television", "televisi"],
+  "ilo sitelen": ["pen, camera", "pulpen, kamera"],
+  "ilo sona": ["computer", "komputer"],
+  "ilo suno": ["lamp", "lampu"],
+  "ilo tawa": ["motor", "motor"],
+  "ilo tenpo": ["clock", "jam"],
+  "ilo tenpo suno": ["sundial", "jam matahari"],
+  "ilo toki": ["telephone, phone", "telepon"],
+  "ilo utala": ["weapon", "senjata"],
+  "insa": ["internal, inner, interior, centre, guts, core, central, inside, middle, belly, stomach", "dalam, interior, pusat, isi perut, inti, tengah, perut"],
+  "insa pi ma tomo": ["downtown", "pusat kota"],
+  "jaki": ["dirty, trash, gross, garbage, mess, disgusting, junk, bacteria, nasty, crap, waste, toxic, infection", "kotor, sampah, menjijikkan, limbah, infeksi"],
+  "jaki ala": ["clean", "bersih"],
+  "jan": ["person, human, people, anybody, dude, anyone, somebody, character, guy, being", "orang, manusia, siapa pun, karakter, makhluk"],
+  "jan ala": ["nobody", "tidak seorang pun"],
+  "jan alasa": ["hunter", "pemburu"],
+  "jan ale": ["everybody, everyone, humanity", "semua orang, kemanusiaan"],
+  "jan awen": ["defender, guard, defendant", "pembela, penjaga, terdakwa"],
+  "jan esun": ["vendor, businessperson, retailer, customer, consumer", "penjual, pebisnis, pelanggan, konsumen"],
+  "jan ike": ["offender, asshole, enemy", "pelanggar, musuh"],
+  "jan jo": ["owner", "pemilik"],
+  "jan kama": ["visitor", "pengunjung"],
+  "jan kepeken": ["user", "pengguna"],
+  "jan kulupu": ["member", "anggota"],
+  "jan kute": ["listener, audience", "pendengar, penonton"],
+  "jan lawa": ["boss, administrator, leader, supervisor, chief, commander, manager, captain, master, chairman, director, president, governor, minister, officer, emperor, congressman, senator, king, employer, sheriff, coordinator, mayor, lawmaker, politician", "bos, pemimpin, manajer, presiden, gubernur, menteri, raja, majikan, walikota, politisi"],
+  "jan lili": ["child, baby", "anak, bayi"],
+  "jan lukin": ["viewer, observer, witness, inspector, reader", "penonton, pengamat, saksi, inspektur, pembaca"],
+  "jan ma": ["citizen", "warga negara"],
+  "jan mani": ["banker", "bankir"],
+  "jan moku": ["eater, chef", "pemakan, koki"],
+  "jan moli": ["dead person, killer", "orang mati, pembunuh"],
+  "jan musi": ["player, performer, actor", "pemain, aktor"],
+  "jan olin": ["lover, spouse, sweetheart, beloved, wife", "kekasih, pasangan, istri"],
+  "jan pali": ["worker, maker, employee, producer, developer, participant, practitioner, manufacturer, personnel, creator, contractor", "pekerja, karyawan, produser, pengembang, peserta, produsen, pencipta"],
+  "jan pana": ["provider, donor, dealer", "penyedia, donor, penjual"],
+  "jan pi alasa sona": ["researcher, detective", "peneliti, detektif"],
+  "jan pi kalama musi": ["musician", "musisi"],
+  "jan pi kama jo": ["receiver, recipient", "penerima"],
+  "jan pi kama sona": ["learner, student", "pembelajar, siswa"],
+  "jan pi kama suli": ["teenager", "remaja"],
+  "jan pi mute lili": ["few (a few people)", "sedikit (beberapa orang)"],
+  "jan pi pana sona": ["educator, instructor, teacher, mentor", "pendidik, guru, mentor"],
+  "jan pi sona esun": ["economist", "ekonom"],
+  "jan pi tawa musi": ["dancer", "penari"],
+  "jan pi toki pona": ["Toki Pona speaker", "penutur Toki Pona"],
+  "jan poka": ["companion, neighbour, partner", "teman, tetangga, pasangan"],
+  "jan pona": ["pal, friend, buddy, ally, mate", "teman, sekutu"],
+  "jan sama": ["peer, sibling, brother, twin", "rekan, saudara, kembar"],
+  "jan seme": ["who, whom", "siapa"],
+  "jan sewi": ["saint", "santo"],
+  "jan sin": ["newcomer, freshman, rookie", "pendatang baru, pemula"],
+  "jan sitelen": ["painter, author, writer", "pelukis, penulis"],
+  "jan sona": ["scholar, scientist, expert, specialist, intellectual", "sarjana, ilmuwan, ahli, intelektual"],
+  "jan sona pi tenpo pini": ["historian", "sejarawan"],
+  "jan suli": ["adult", "dewasa"],
+  "jan tawa": ["traveller", "pelancong"],
+  "jan toki": ["spokesperson, speaker, narrator, caller, correspondent, reporter", "juru bicara, narator, reporter"],
+  "jan utala": ["warrior, fighter, soldier, competitor, opponent, rival", "pejuang, tentara, pesaing, lawan"],
+  "jasima": ["reflect", "mencerminkan"],
+  "jelo": ["yellow", "kuning"],
+  "jo": ["have, possess, carry, contain, own, hold, possession, ownership, consist, include, comprise", "memiliki, membawa, memiliki, kepemilikan"],
+  "jo ala": ["lack", "kekurangan"],
+  "jo e ilo utala": ["armed", "bersenjata"],
+  "kala": ["fish, sea creature, salmon", "ikan, makhluk laut, salmon"],
+  "kala suli": ["whale", "paus"],
+  "kalama": ["sound, noise, tone", "suara, nada"],
+  "kalama ala": ["silence, silent, quiet", "keheningan, sunyi"],
+  "kalama musi": ["music, song", "musik, lagu"],
+  "kama": ["coming, come, arrival, arrive, become, upcoming, emerging, emerge, happen, occur", "datang, menjadi, muncul, terjadi"],
+  "kama ante": ["evolve", "berevolusi"],
+  "kama jo": ["receive, acquire, obtain, acquisition, get, take, gain, download, pickup, collect", "menerima, mendapatkan, mengumpulkan"],
+  "kama lili": ["decrease", "berkurang"],
+  "kama lon": ["enroll", "mendaftar"],
+  "kama pona": ["recovery, welcome (interj), recover", "pemulihan, selamat datang, pulih"],
+  "kama sona": ["learning, realize, learn, study (v), discover", "belajar, menyadari, mempelajari, menemukan"],
+  "kama suli": ["increasing, growing, grow, growth, expansion, increased, increase, inflation", "meningkat, tumbuh, pertumbuhan, inflasi"],
+  "kama telo": ["melt", "meleleh"],
+  "kasi": ["plant, bush", "tanaman, semak"],
+  "kasi kule": ["flower", "bunga"],
+  "kasi nasa": ["marijuana", "ganja"],
+  "kasi suli": ["tree", "pohon"],
+  "kasi telo": ["seaweed", "rumput laut"],
+  "ken": ["able, potential, ability, capability, capable, may, possible, could, eligible, can, possibility, permission, likelihood, chance, probability, maybe, opportunity, available, possibly, odds", "bisa, mungkin, kemampuan, kesempatan"],
+  "ken ala": ["unable, impossible, disabled", "tidak bisa, tidak mungkin, cacat"],
+  "ken ike": ["risk", "risiko"],
+  "ken la": ["patentially, perhaps, maybe, possibly", "mungkin"],
+  "ken lukin": ["visible", "terlihat"],
+  "ken moli": ["mortality", "kematian"],
+  "ken tawa": ["mobile", "bergerak"],
+  "kepeken": ["use, utilize, via, employ", "menggunakan, melalui"],
+  "kepeken tenpo lili": ["quick", "cepat"],
+  "kijetesantakalu": ["procyonid", "rakun"],
+  "kili": ["fruit, vegetable, apple, kumquat", "buah, sayuran, apel, kumquat"],
+  "kin": ["also, too", "juga"],
+  "kin la": ["moreover", "lebih-lebih"],
+  "kipisi": ["split, division, slice, cut, divide, chop, segment, section", "membelah, memotong, membagi"],
+  "kiwen": ["solid, rock, stone, hard object, concrete, metal, steel, iron, stiff, firm", "padat, batu, logam, beton"],
+  "kiwen kasi": ["wood, wooden", "kayu"],
+  "kiwen uta": ["tooth", "gigi"],
+  "ko": ["goo, semisolid, powder, paste, clay", "bubur, bubuk, tanah liat"],
+  "ko pan": ["flour", "tepung"],
+  "kokosila": ["speak another language in a Toki Pona only environment", "berbicara bahasa lain di lingkungan Toki Pona saja"],
+  "kon": ["air, soul, spirit, gas, essence, atmosphere, oxygen, breathe, breath, meaning, intangible, invisible entity, breathing", "udara, jiwa, roh, gas, napas, makna"],
+  "kon tawa": ["wind", "angin"],
+  "kule": ["colour", "warna"],
+  "kulupu": ["organization, group, community, collective, tribe, squad, bunch, tribal, cluster, league, society, collection, association, crew, team, club, coalition, set, socially, gathering, institution, category, gang, meeting, assembly, network, pile, crowd", "organisasi, kelompok, komunitas, suku, tim, perkumpulan"],
+  "kulupu ilo": ["kit", "perangkat"],
+  "kulupu lawa": ["council, senate, congress, administration", "dewan, senat, kongres"],
+  "kulupu mama": ["family", "keluarga"],
+  "kulupu pi kalama musi": ["band", "band"],
+  "kulupu utala": ["army, military", "tentara, militer"],
+  "kulupu utala telo": ["navy", "angkatan laut"],
+  "kute": ["hear, listen, ear, hearing", "mendengar, telinga"],
+  "la": ["if, while, depending", "jika, sementara, tergantung"],
+  "lanpan": ["steal, seize", "mencuri, merebut"],
+  "lape": ["sleep, asleep, rest", "tidur, istirahat"],
+  "lape ala": ["awake", "bangun"],
+  "laso": ["blue, teal, green", "biru, hijau"],
+  "laso kasi": ["green", "hijau"],
+  "laso loje": ["purple (2020)", "ungu (2020)"],
+  "lawa": ["govern, head, authority, control, ruling, regulatory, leading, manage, administrative, leadership, rule, law, lead, management, legal, mind, enforce, judicial, oversee, conduct, official, regulate, brain, policy, administer", "mengatur, memimpin, otoritas, hukum, pikiran"],
+  "leko": ["square, cube, block", "persegi, kubus, balok"],
+  "len": ["clothing, cloth, clothes, fabric, outfit, privacy, cover, dress, jacket, wear, shirt", "pakaian, kain, baju, jaket"],
+  "len ala": ["naked", "telanjang"],
+  "len jaki": ["laundry", "cucian"],
+  "len lawa": ["hat, headscarf, cap", "topi, penutup kepala"],
+  "len luka": ["glove", "sarung tangan"],
+  "len noka": ["boot, shoe, sock, pants", "sepatu, kaus kaki, celana"],
+  "len pi weka telo": ["towel", "handuk"],
+  "len sinpin": ["mask", "topeng"],
+  "lete": ["cold, raw, frozen", "dingin, mentah, beku"],
+  "lili": ["small, little, short, slight, reduce, junior, slightly, minimize, narrow, bit, minor, partly, reduction, brief, young, fewer, less, diminish, tiny, barely, decrease, minimal, somewhat, partially, thin, inch, shallow, subtle, lightly, kinda", "kecil, sedikit, pendek, mengurangi, sempit, tipis"],
+  "linja": ["line, cord, string, rope, thread, fibre, cable, link", "garis, tali, serat, kabel"],
+  "linja kiwen": ["chain", "rantai"],
+  "linja lawa": ["hair", "rambut"],
+  "linja monsi": ["tail", "ekor"],
+  "linja uta": ["moustache", "kumis"],
+  "lipu": ["paper, book, ticket, document, article, card, page, magazine, sheet, file, website, essay, novel, letter (in mail), sign, publication", "kertas, buku, tiket, dokumen, artikel, kartu, halaman, majalah, lembar, file, situs web, esai, novel, surat, tanda, publikasi"],
+  "lipu kasi": ["leaf", "daun"],
+  "lipu lawa": ["constitution", "konstitusi"],
+  "lipu moku": ["menu", "menu"],
+  "lipu nimi": ["dictionary", "kamus"],
+  "lipu tenpo": ["calendar", "kalender"],
+  "loje": ["red", "merah"],
+  "loje laso": ["purple (2021)", "ungu (2021)"],
+  "loje walo": ["pink", "merah muda"],
+  "lon": ["at, existing, real, exist, located, presence, yep, existence, actual, on, true, living, yes, truth, reality, physical, yeah, upon, genuine, truly, in, alive, position, accurate, exactly, occupy, live, attendance, certainly, indeed, attend, right (not wrong)", "di, ada, nyata, benar, hidup, tepat"],
+  "lon ala": ["fake, false", "palsu"],
+  "lon ale": ["everywhere", "di mana-mana"],
+  "lon anpa": ["under", "di bawah"],
+  "lon insa": ["within", "di dalam"],
+  "lon la": ["actually", "sebenarnya"],
+  "lon ma ante": ["elsewhere, abroad", "di tempat lain, di luar negeri"],
+  "lon monsi": ["behind", "di belakang"],
+  "lon ni": ["there, here", "di sana, di sini"],
+  "lon poka": ["around, near, alongside, nearby, close (adj), accompany, beside", "di sekitar, dekat, di samping"],
+  "lon seme": ["where", "di mana"],
+  "lon sewi": ["above, over", "di atas"],
+  "lon sinpin": ["ahead", "di depan"],
+  "luka": ["hand, arm, five, wrist", "tangan, lengan, lima, pergelangan tangan"],
+  "luka luka tu": ["dozen, twelve", "lusin, dua belas"],
+  "luka tu": ["seven", "tujuh"],
+  "luka waso": ["wing", "sayap"],
+  "lukin": ["see, observe, look at, sight, gaze, observation, check, view, scan, watch, visual, inspection, examine, vision, notice, surveillance, attention, appearance, examination, detect", "melihat, mengamati, memeriksa, penglihatan"],
+  "lukin ala": ["overlook, blind", "melewatkan, buta"],
+  "lukin lili": ["glance", "melirik"],
+  "lupa": ["hole, door, orifice, pit, window, gate", "lubang, pintu, jendela, gerbang"],
+  "lupa ma": ["cave", "gua"],
+  "ma": ["territory, country, land, realm, area, region, field, soil, place, earth, province, zone, ground, nation, environmental, environment, location, site, world, domain, national, nature", "wilayah, negara, tanah, daerah, provinsi, lingkungan, lokasi, dunia"],
+  "ma Elena": ["Greece", "Yunani"],
+  "ma Mewika": ["United States", "Amerika Serikat"],
+  "ma Nijon": ["Japan", "Jepang"],
+  "ma ala": ["nowhere", "tidak di mana-mana"],
+  "ma ale": ["worldwide", "di seluruh dunia"],
+  "ma kasi": ["garden", "taman"],
+  "ma mama": ["homeland", "tanah air"],
+  "ma sewi": ["heaven", "surga"],
+  "ma suli": ["continent", "benua"],
+  "ma tomo": ["city, town", "kota"],
+  "ma utala": ["arena", "arena"],
+  "mama": ["parent, parental, mama, mommy, mom, creator, mother, foster, originator", "orang tua, ibu, pencipta"],
+  "mama mama": ["grandma, grandmother", "nenek"],
+  "mama meli": ["mother", "ibu"],
+  "mama mije": ["dad, father, daddy", "ayah"],
+  "mani": ["money, cash, monetary, currency, treasure, wealth, worth, cattle, dollar, financial, funding, fiscal, wage, fee, cost, valuable", "uang, harta, kekayaan, keuangan"],
+  "mani kama": ["income", "pendapatan"],
+  "mani lili": ["cent", "sen"],
+  "mani mute": ["expensive", "mahal"],
+  "mani tomo": ["rent", "sewa"],
+  "meli": ["female, lady, woman, girl", "perempuan, wanita, gadis"],
+  "meli olin": ["girlfriend", "pacar perempuan"],
+  "meso": ["average, moderate, medium", "rata-rata, sedang"],
+  "mi": ["me, I, my, mine, our, myself, us", "saya, aku, milikku, kami"],
+  "mi la": ["personally", "secara pribadi"],
+  "mi mute": ["we, us, ourselves", "kami, kita"],
+  "mi pakala": ["I'm sorry", "maaf"],
+  "mi tawa": ["bye (said by person leaving)", "selamat tinggal (yang pergi)"],
+  "mije": ["male, man, husband, cisgender man", "laki-laki, suami"],
+  "misikeke": ["medication, medicine", "obat"],
+  "moku": ["eating, eat, food, consume, dining, consumption, meal, swallow, nutrition, dinner, drinking, chew, groceries", "makan, makanan, konsumsi"],
+  "moku lili": ["snack", "camilan"],
+  "moku suwi": ["dessert", "makanan penutup"],
+  "moku telo": ["soup", "sup"],
+  "moli": ["death, killing, dead, die, dying, kill", "kematian, mati, membunuh"],
+  "moli telo": ["drown", "tenggelam"],
+  "monsi": ["butt, back (anatomy), ass", "pantat, punggung"],
+  "monsuta": ["scary, fear, monster, horror", "menakutkan, monster, horor"],
+  "mu": ["woof, meow, animal vocalization, ribbit, purr, neigh, cock-a-doodle-doo", "suara hewan"],
+  "mun": ["moon, celestial body", "bulan, benda langit"],
+  "musi": ["entertainment, fun, funny, play, game, comedy, art, artistic", "hiburan, menyenangkan, permainan, seni"],
+  "musi ala": ["boring, seriously", "membosankan, serius"],
+  "musi supa": ["board game", "permainan papan"],
+  "mute": ["plenty, many, much, multiple, very, lots, several, numerous, various, most, quantity, twenty, fifty, thousand, nine, majority, incredibly, million", "banyak, sangat, beberapa, mayoritas"],
+  "mute ike": ["too much", "terlalu banyak"],
+  "mute pona": ["sufficient", "cukup"],
+  "n": ["um", "um"],
+  "namako": ["spice, extra, additional, adornment", "bumbu, tambahan, hiasan"],
+  "nanpa": ["number, count, score, rating, rank, measurement, ranking, statistical", "angka, nomor, peringkat"],
+  "nanpa luka": ["fifth", "kelima"],
+  "nanpa luka tu": ["seventh", "ketujuh"],
+  "nanpa luka wan": ["sixth", "keenam"],
+  "nanpa pini": ["last, final", "terakhir"],
+  "nanpa tu": ["second (2nd), secondary", "kedua"],
+  "nanpa tu tu": ["fourth", "keempat"],
+  "nanpa tu wan": ["third", "ketiga"],
+  "nanpa wan": ["first, original, primary", "pertama, asli"],
+  "nasa": ["weird, strange, unusual, odd, drunk, silly, wild", "aneh, mabuk, konyol"],
+  "nasin": ["road, way, doctrine, method, path, manner, avenue, route, direction, street, orientation, trail, mode, technique, layout, system, course, passage, process, track, format, ideology, tactic, custom, aisle, journey, lane", "jalan, metode, arah, sistem"],
+  "nasin len": ["fashion", "mode"],
+  "nasin mani": ["capitalism", "kapitalisme"],
+  "nasin moku": ["diet", "diet"],
+  "nasin pona": ["solution", "solusi"],
+  "nasin sewi": ["religion", "agama"],
+  "nasin toki": ["accent", "aksen"],
+  "nena": ["hill, nose", "bukit, hidung"],
+  "nena suli": ["mountain", "gunung"],
+  "ni": ["this, that, these, those", "ini, itu"],
+  "ni la": ["thus", "dengan demikian"],
+  "nimi": ["word, name, term, title", "kata, nama, judul"],
+  "nimi ijo": ["noun", "kata benda"],
+  "nimi kon": ["content word", "kata isi"],
+  "nimi pali": ["verb", "kata kerja"],
+  "noka": ["leg, foot, lap, ankle, kick", "kaki, pergelangan kaki, tendangan"],
+  "o": ["hey, shall", "hei, akan"],
+  "o kama pona": ["welcome (interj)", "selamat datang"],
+  "oko": ["eye", "mata"],
+  "olin": ["loving, love, romance, romantic, compassion", "cinta, kasih sayang"],
+  "ona": ["its, her, them, their, he, she, him, they, it, his, themselves, itself", "dia, mereka, miliknya"],
+  "ona sama": ["herself, himself, itself", "dirinya sendiri"],
+  "open": ["open, begin, start, beginning, initiate, starting, opening", "buka, mulai, pembukaan"],
+  "pakala": ["destruction, broken, mistake, damage, damn, goddamn, ruin, burst, accident, destroy, heck, error, hurt, crash, injure, harm, fail, break, failure, fault, injury, flaw, crack, collapse, snap, fuck, fucking", "rusak, kesalahan, kecelakaan, gagal"],
+  "pali": ["do, work, construct, produce, make, activity, job, build, production, working, labour, action, task, create, function, occupation, operating, project, execute, manufacturing, craft, develop, generate, compose, assemble, act, profession, assignment, creation, enact, commit, perform, operation, service, effort, implement, operate, accomplish, implementation, processing, behaviour, behave, career", "melakukan, bekerja, membuat, pekerjaan"],
+  "pali ala": ["unemployment", "pengangguran"],
+  "pali ike": ["sin, crime", "dosa, kejahatan"],
+  "pali kulupu": ["collaboration, cooperate", "kolaborasi, kerja sama"],
+  "pali musi": ["performance", "pertunjukan"],
+  "pali nanpa": ["calculation", "perhitungan"],
+  "pali pi kama sona": ["experiment", "eksperimen"],
+  "pali sijelo": ["workout, exercise", "olahraga"],
+  "pali sin": ["rebuild", "membangun kembali"],
+  "palisa": ["stick, rod, stake, pole, branch, staff", "tongkat, cabang"],
+  "palisa luka": ["finger", "jari"],
+  "pan": ["bread, grain, wheat, rice", "roti, gandum, beras"],
+  "pan linja": ["noodles", "mi"],
+  "pan suwi": ["cake", "kue"],
+  "pana": ["give, put, deliver, grant, delivery, send, submit, provide, transfer, distribute, distribution, donate, appoint, contribute, output, yield, publishing, given, share, deploy, offering, assign, deposit, convey", "memberi, mengirim, menyumbang"],
+  "pana e sona": ["educate", "mendidik"],
+  "pana e telo loje": ["bleed", "berdarah"],
+  "pana mani": ["payment, donation", "pembayaran, donasi"],
+  "pana pona": ["assistance", "bantuan"],
+  "pana sona": ["teach, teaching, educate, instruct", "mengajar, pendidikan"],
+  "pi ma ante": ["foreign", "asing"],
+  "pi ma mute": ["international", "internasional"],
+  "pi tenpo pini": ["historical", "sejarah"],
+  "pilin": ["emotion, feeling, feel, sentiment, mood, emotionally, heart, sense, attitude, emotional, opinion, notion, impression, perceive, assume, hypothesis, deem", "perasaan, emosi, pendapat"],
+  "pilin ante": ["disagree", "tidak setuju"],
+  "pilin ike": ["upset, sad, guilt, uncomfortable, suffer, stress, frustration, disappointed, disappointment, grief", "kesal, sedih, stres, kecewa"],
+  "pilin nasa": ["confusion", "kebingungan"],
+  "pilin pona": ["glad, happy, pleased, joy, satisfaction, happiness, comfortable, pleasure, grateful, happily, well-being", "senang, bahagia, nyaman"],
+  "pilin sama": ["sympathy", "simpati"],
+  "pilin uta": ["flavour, taste", "rasa"],
+  "pilin utala": ["angry, rage, anger, mad", "marah"],
+  "pilin wawa": ["confident, excitement", "percaya diri, kegembiraan"],
+  "pimeja": ["black, dark, darkness, shadow, shade", "hitam, gelap, bayangan"],
+  "pini": ["end, finish, shut, ending, conclude, outcome, cease, close (v), closed, latter, quit, final, stop, complete, off, cancel", "akhir, selesai, berhenti"],
+  "pini ala": ["endless", "tanpa akhir"],
+  "pini la": ["finally, ultimately", "akhirnya"],
+  "pini pali": ["retire", "pensiun"],
+  "pipi": ["bug, insect, spider", "serangga, laba-laba"],
+  "poka": ["side, hip, beside, aside", "sisi, pinggul, di samping"],
+  "poki": ["container, jar, box, package, bag, basket, bucket, bottle, pot, cabinet, classify, drawer, storage, locker, case, bowl", "wadah, kotak, botol, lemari"],
+  "poki len": ["sack", "karung"],
+  "poki lipu": ["envelope", "amplop"],
+  "poki seli": ["oven", "oven"],
+  "poki sike": ["barrel", "tong"],
+  "poki tawa": ["cart", "gerobak"],
+  "poki telo": ["cup", "cangkir"],
+  "poki wawa": ["battery", "baterai"],
+  "pona": ["good, appropriate, nice, acceptable, proper, simply, OK, fine, quality, valid, pleasant, friendly, positive, well, benefit, simple, virtue, alright, correct, repair, fix, right (not wrong), advantage, cool, okay, fixed, helpful, validity, kind, ethical, merit, peaceful, ideal, improve, successfully, improvement, correction, grace, fair, successful, ease, heal, supportive, approval", "baik, bagus, benar, bermanfaat"],
+  "pona a": ["fantastic", "fantastis"],
+  "pona la": ["fortunately", "untungnya"],
+  "pona lukin": ["pretty, attractive, beauty", "cantik, menarik"],
+  "pona mute": ["excellent", "sangat baik"],
+  "pona sijelo": ["health", "kesehatan"],
+  "pona tawa": ["suit (v)", "cocok"],
+  "pu": ["interact with Toki Pona: The Language of Good", "berinteraksi dengan Toki Pona: The Language of Good"],
+  "sama": ["equal, alike, similar, equivalent, as, similarly, equality, equally, like, identical", "sama, serupa, identik"],
+  "sama ala": ["unlike", "tidak seperti"],
+  "sama lukin": ["look like", "terlihat seperti"],
+  "seli": ["heat, fire, hot, burning, flame, burn, warm, warming", "panas, api, membakar"],
+  "selo": ["skin, boundary, surface, peel, outer, shape, layer", "kulit, permukaan, lapisan"],
+  "selo kiwen": ["shell", "cangkang"],
+  "selo soweli": ["leather", "kulit hewan"],
+  "seme": ["what, which, huh", "apa, yang mana"],
+  "sewi": ["upper, divine, sacred, top, holy, sky, elevated, high, spiritual, raise, supreme, highly, peak", "tinggi, suci, langit"],
+  "sijelo": ["body, torso, flesh", "tubuh, daging"],
+  "sijelo pona": ["healthy", "sehat"],
+  "sike": ["circle, round, sphere, ball, loop, cycle, wheel, disc, globe, circuit", "lingkaran, bola, siklus"],
+  "sike kon": ["balloon", "balon"],
+  "sike lili": ["dot", "titik"],
+  "sike mama": ["egg", "telur"],
+  "sin": ["new, newly, fresh", "baru, segar"],
+  "sina": ["you, your, yours, yourself", "kamu, milikmu"],
+  "sinpin": ["front, face (n), wall", "depan, wajah, dinding"],
+  "sitelen": ["picture, image, graphic, symbol, drawing, illustration, photo, illustrate, writing, painting, write, written, depict, draw, photograph, portrait, icon, representation, mark, portray", "gambar, tulisan, foto"],
+  "sitelen esun": ["advertisement, ad", "iklan"],
+  "sitelen lape": ["dream", "mimpi"],
+  "sitelen musi": ["comics, meme", "komik, meme"],
+  "sitelen selo": ["tattoo", "tato"],
+  "sitelen sona": ["chart", "bagan"],
+  "sitelen tawa": ["video, film, footage, movie", "video, film"],
+  "sitelen tawa sona": ["documentary", "dokumenter"],
+  "soko": ["mushroom, fungus", "jamur"],
+  "sona": ["know, knowledge, information, understand, understanding, aware, info, wisdom, awareness, known, data, wise, recognition, recognize, expertise", "tahu, pengetahuan, informasi"],
+  "sona ala": ["ignorance, ignorant, unknown, uncertainty", "ketidaktahuan, tidak dikenal"],
+  "sona nanpa": ["mathematics", "matematika"],
+  "sona toki": ["linguistics", "linguistik"],
+  "soweli": ["animal, deer, creature, dog, cat, llama, goat, Musteloidea, beast, lion", "hewan, rusa, kucing, singa"],
+  "soweli len": ["sheep", "domba"],
+  "soweli lili": ["Glires or Eulipotyphla (2021), mouse (2020)", "tikus"],
+  "soweli suli": ["elephant", "gajah"],
+  "soweli tawa": ["horse", "kuda"],
+  "suli": ["importance, big, large, important, significant, matter (v), significantly, grand, huge, vast, weight, tall, crucial, prominent, extensive, fat, broad, long, substantial, significance, size, giant, heavy, wide, extended, considerable, thick, major, tremendous, extent, magnitude, great, length, vital, height, importantly, greatly, severe, dramatically, mass", "penting, besar, signifikan"],
+  "suli la": ["especially", "terutama"],
+  "suno": ["sun, solar, light, sunlight, bright, shine", "matahari, cahaya, bersinar"],
+  "supa": ["platform, table, shelf, board, furniture, flat, lie (be in flat position), level, desk", "platform, meja, papan, furnitur"],
+  "supa lape": ["bed", "tempat tidur"],
+  "supa moku": ["plate", "piring"],
+  "supa monsi": ["seat", "kursi"],
+  "suwi": ["sweet, cute, candy, sugar", "manis, lucu, permen"],
+  "tan": ["from, reason, because of, by, source", "dari, alasan, karena"],
+  "tan seme": ["why", "mengapa"],
+  "taso": ["but, only, solely, however, exclusively, although, though, just, exclusive, despite, nonetheless, mere, merely, except, nevertheless, yet, sole, whereas", "tapi, hanya, meskipun"],
+  "tawa": ["motion, go, toward, move, movement, towards, to, for, transit, travel, trip, transportation, walk, advance, onto, transport, pass, walking, migration, departure, from the perspective of, push", "bergerak, pergi, ke, untuk, transportasi"],
+  "tawa anpa": ["descend", "turun"],
+  "tawa insa": ["into", "ke dalam"],
+  "tawa musi": ["dance, dancing", "menari"],
+  "tawa pona": ["bye (said by person staying), goodbye", "selamat tinggal (yang tinggal)"],
+  "tawa sewi": ["jump, leap", "melompat"],
+  "tawa sike": ["roll, spin", "berguling, berputar"],
+  "tawa sinpin": ["forward", "maju"],
+  "tawa telo": ["swim", "berenang"],
+  "tawa waso": ["flight", "terbang"],
+  "tawa wawa": ["run, running", "berlari"],
+  "telo": ["fluid, water, wet, wash, pond, pool", "cairan, air, basah"],
+  "telo ala": ["dry", "kering"],
+  "telo jelo": ["piss", "kencing"],
+  "telo kasi": ["tea", "teh"],
+  "telo kili": ["juice", "jus"],
+  "telo loje": ["blood", "darah"],
+  "telo nasa": ["alcohol, beer", "alkohol, bir"],
+  "telo selo": ["sweat", "keringat"],
+  "telo sewi": ["rain", "hujan"],
+  "telo suli": ["ocean, sea", "lautan, laut"],
+  "telo uta": ["spit", "ludah"],
+  "telo wawa": ["gasoline", "bensin"],
+  "tenpo": ["time, timing, session, occasion, phase, moment, date, circumstance, hour, appointment, scenario", "waktu, sesi, momen"],
+  "tenpo ala": ["never", "tidak pernah"],
+  "tenpo ale": ["forever, constantly", "selamanya, terus-menerus"],
+  "tenpo esun": ["week", "minggu"],
+  "tenpo kama": ["future, later", "masa depan, nanti"],
+  "tenpo lete": ["winter", "musim dingin"],
+  "tenpo lili": ["minute, second (unit of time)", "menit, detik"],
+  "tenpo mun": ["month", "bulan"],
+  "tenpo musi": ["festival", "festival"],
+  "tenpo mute la": ["typically, usually, tend, commonly", "biasanya, cenderung"],
+  "tenpo ni": ["now, current", "sekarang"],
+  "tenpo ni la": ["currently", "saat ini"],
+  "tenpo pi jan lili": ["childhood", "masa kecil"],
+  "tenpo pi pali ala": ["vacation", "liburan"],
+  "tenpo pimeja": ["night", "malam"],
+  "tenpo pimeja ni": ["tonight", "malam ini"],
+  "tenpo pini": ["past, deadline, history", "masa lalu, tenggat waktu, sejarah"],
+  "tenpo pini la": ["previously", "sebelumnya"],
+  "tenpo sama": ["meantime", "sementara itu"],
+  "tenpo sama la": ["meanwhile", "sementara itu"],
+  "tenpo seli": ["summer", "musim panas"],
+  "tenpo sike": ["year", "tahun"],
+  "tenpo suli": ["era, longtime, century", "era, abad"],
+  "tenpo suno": ["day", "hari"],
+  "tenpo suno kama": ["tomorrow", "besok"],
+  "tenpo suno ni": ["today", "hari ini"],
+  "tenpo suno olin": ["Valentine's Day", "Hari Valentine"],
+  "tenpo suno pini": ["yesterday", "kemarin"],
+  "toki": ["speech, talk, conversation, say, communicate, speak, communication, hello, language, tell, statement, hi, discuss, discussion, discourse, mention, comment, refer, message, express, remark, dialogue, reporting, call, narrative, commentary, disclose, respond, contact, verbal, admit, proposal, tale, story, declare, interview, answer, testify, report, expression, phrase", "bicara, percakapan, bahasa, halo"],
+  "toki Inli": ["English", "Bahasa Inggris"],
+  "toki Lasina": ["Latin", "Latin"],
+  "toki ike": ["complain, criticize", "mengeluh, mengkritik"],
+  "toki insa": ["thinking", "berpikir"],
+  "toki lawa": ["command", "perintah"],
+  "toki musi": ["poetry, joke", "puisi, lelucon"],
+  "toki open": ["introduction", "pengantar"],
+  "toki sona": ["lecture", "kuliah"],
+  "toki suli": ["announcement", "pengumuman"],
+  "toki tawa sewi": ["pray", "berdoa"],
+  "toki utala": ["argument", "argumen"],
+  "toki wile": ["plea", "permohonan"],
+  "tomo": ["building, house, housing, chamber, home, room, shelter, residence, suite, domestic, structural, structure, residential, facility, establishment, household, cabin, apartment", "bangunan, rumah, kamar"],
+  "tomo anpa": ["basement", "ruang bawah tanah"],
+  "tomo esun": ["shop, store", "toko"],
+  "tomo lape": ["bedroom", "kamar tidur"],
+  "tomo lawa": ["headquarters, courtroom", "markas, ruang sidang"],
+  "tomo len": ["tent", "tenda"],
+  "tomo lipu": ["library", "perpustakaan"],
+  "tomo mani": ["bank", "bank"],
+  "tomo moku": ["restaurant, kitchen", "restoran, dapur"],
+  "tomo musi": ["theatre", "teater"],
+  "tomo pali": ["studio, factory, workshop, office", "studio, pabrik, kantor"],
+  "tomo pi pali sona": ["lab", "laboratorium"],
+  "tomo pi pona sijelo": ["clinic, hospital", "klinik, rumah sakit"],
+  "tomo pi sitelen tawa": ["cinema", "bioskop"],
+  "tomo pi tomo tawa": ["garage", "garasi"],
+  "tomo sewi": ["temple, church", "kuil, gereja"],
+  "tomo sona": ["academy, classroom, school", "akademi, ruang kelas, sekolah"],
+  "tomo suli": ["tower", "menara"],
+  "tomo tawa": ["car, vehicle, wagon, van, shuttle", "mobil, kendaraan"],
+  "tomo tawa kon": ["plane, aircraft", "pesawat"],
+  "tomo tawa telo": ["boat, ship", "perahu, kapal"],
+  "tomo telo": ["bathroom", "kamar mandi"],
+  "tomo waso": ["nest", "sarang"],
+  "tonsi": ["non-binary person, transgender person, gender non-conforming person", "orang non-biner, transgender"],
+  "tu": ["two, pair, double, both, twice, couple", "dua, pasangan"],
+  "tu tu": ["four", "empat"],
+  "tu wan": ["three", "tiga"],
+  "unpa": ["sex, sexual, sexually, fucking", "seks, seksual"],
+  "uta": ["mouth, lip, kiss, jaw", "mulut, bibir, ciuman"],
+  "utala": ["fight, fighting, battle, combat, conflict, contend, assault, attack, versus, violent, compete, challenge, violence, hit, struggle, war, contest, oppose, dispute", "bertarung, pertempuran, kekerasan"],
+  "utala ala": ["peace", "damai"],
+  "walo": ["white, pale", "putih, pucat"],
+  "wan": ["one, united, unity, combined, unite, single, unit, blend, combine, union", "satu, bersatu, kesatuan"],
+  "waso": ["bird, chicken", "burung, ayam"],
+  "waso telo": ["duck", "bebek"],
+  "wawa": ["strength, power, powerful, strong, energy, strongly, force, intense, bold, intensity, reinforce, strengthen, firmly, charge, brave, rapid, electrical", "kekuatan, kuat, energi"],
+  "wawa ala": ["weak, weakness", "lemah"],
+  "weka": ["rid, removal, remove, eliminate, apart, omit, missing, away, absence, loss, delete, dismiss, distant, leave, abandon, far, vanish, disappear, avoid, out, exclude, escape, distance", "menghilangkan, menghapus, jauh"],
+  "weka sona": ["forget", "lupa"],
+  "wile": ["want, wish, intend, require, need, desire, intention, willing, will, intent, preference, motivation, necessity, yearn, ought, necessary, hope, willingness, ambition, prefer, requirement, required, must, obligation, decision, should, demand, eager, request, agenda", "ingin, keinginan, kebutuhan"],
+  "wile ala": ["reluctant", "enggan"],
+  "wile moku": ["hunger, hungry", "lapar"],
+  "wile sona": ["curiosity, inquiry, question, curious", "rasa ingin tahu, pertanyaan"],
+  "yupekosi": ["change a creative work and unintentionally make it worse", "mengubah karya kreatif dan tidak sengaja membuatnya lebih buruk"]
+    };
+
+    // Create reverse dictionary for English/Indonesian lookups
+    const reverseDictionary = {};
+    for (const [key, [en, id]] of Object.entries(dictionary)) {
+      // Add both single words and phrases to reverse dictionary
+      en.split(/,\s*/).forEach(word => {
+        reverseDictionary[word.toLowerCase()] = key;
+      });
+      id.split(/,\s*/).forEach(word => {
+        reverseDictionary[word.toLowerCase()] = key;
+      });
+    }
+
+    let lang = 0; // 0 = EN, 1 = ID
+    let symbolOnly = false;
+    let symbolStyle = 'pona'; // 'pona' or 'sitelen'
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      if (!input) return;
+
+      // First check for exact phrase matches
+      const exactMatch = Object.keys(dictionary).find(tpPhrase => {
+        const lowerPhrase = tpPhrase.toLowerCase();
+        const [en, id] = dictionary[tpPhrase];
+        return input === lowerPhrase || 
+               input === en.toLowerCase() || 
+               input === id.toLowerCase();
+      });
+
+      if (exactMatch) {
+        displaySymbols(exactMatch.split(' '), exactMatch);
+        return;
+      }
+
+      // Check if input is a multi-word phrase in Toki Pona
+      const tpWords = input.split(/\s+/);
+      if (tpWords.every(word => dictionary[word])) {
+        displaySymbols(tpWords, tpWords.join(' '));
+        return;
+      }
+
+      // Check if input is an English/Indonesian phrase
+      const translatedPhrase = reverseDictionary[input];
+      if (translatedPhrase) {
+        displaySymbols(translatedPhrase.split(' '), translatedPhrase);
+        return;
+      }
+
+      // Fallback to word-by-word display
+      const wordsToDisplay = input.split(/\s+/).map(word => 
+        dictionary[word] ? word : reverseDictionary[word] || word
+      );
+      displaySymbols(wordsToDisplay, wordsToDisplay.join(' '));
+    }
+
+    function displaySymbols(words, originalPhrase) {
+      const symbolDiv = document.getElementById("symbol");
+      
+      // Container for the whole phrase
+      const phraseContainer = document.createElement("div");
+      phraseContainer.className = "phrase-container";
+
+      // Display each symbol in the phrase
+      words.forEach(word => {
+        if (!dictionary[word]) {
+          const notFound = document.createElement("div");
+          notFound.className = "symbol-container";
+          notFound.innerHTML = `<div style="color:#f55;font-weight:bold;">🚫 ${word}</div>`;
+          phraseContainer.appendChild(notFound);
+          return;
+        }
+
+        const container = document.createElement("div");
+        container.className = "symbol-container";
+
+        const img = document.createElement("img");
+        img.alt = word;
+        
+        if (symbolStyle === 'pona') {
+          img.src = `https://sitelen.nimi.li/img/${word}.png`;
+        } else {
+          img.src = `https://nimi.li/internal/api/ss?word=${word}`;
+        }
+
+        const wordLabel = document.createElement("div");
+        wordLabel.className = "word-label";
+        wordLabel.textContent = word;
+
+        if (symbolOnly) {
+          wordLabel.classList.add("hide");
+        }
+
+        container.appendChild(img);
+        container.appendChild(wordLabel);
+        phraseContainer.appendChild(container);
+
+        img.onerror = () => {
+          container.innerHTML = `
+            <div style="width:96px;height:96px;background:#333;display:flex;align-items:center;justify-content:center;border-radius:8px;">❓</div>
+            ${symbolOnly ? "" : `<div class="word-label">${word}</div>`}
+          `;
+        };
+      });
+
+      symbolDiv.appendChild(phraseContainer);
+
+      // Add translation below the symbols
+      if (!symbolOnly) {
+        const translation = document.createElement("div");
+        translation.className = "translation";
+        translation.textContent = dictionary[originalPhrase] ? 
+          dictionary[originalPhrase][lang] : 
+          words.map(word => dictionary[word]?.[lang] || word).join(' ');
+        symbolDiv.appendChild(translation);
+      }
+    }
+
+    function toggleLang() {
+      lang = 1 - lang;
+      showSymbols();
+    }
+
+    function toggleSymbolOnly() {
+      symbolOnly = !symbolOnly;
+      showSymbols();
+    }
+
+    function toggleSymbolStyle() {
+      symbolStyle = (symbolStyle === 'pona') ? 'sitelen' : 'pona';
+      showSymbols();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('light-mode');
+      localStorage.setItem('lightMode', document.body.classList.contains('light-mode'));
+    }
+
+    // Initialize
+    if (localStorage.getItem('lightMode') === 'true') {
+      document.body.classList.add('light-mode');
+    }
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
