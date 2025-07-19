@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.light-mode {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    input, textarea {
+      font-size: 1.3rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 90%;
+      max-width: 500px;
+      margin-bottom: 1rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .light-mode input, .light-mode textarea {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    #symbol {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0.5rem;
+    }
+    .symbol-container img {
+      width: 20vw;
+      max-width: 96px;
+      height: auto;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label, .translation {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+      transition: color 0.3s;
+    }
+    .light-mode .word-label, .light-mode .translation {
+      color: #666;
+    }
+    .translation {
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+    .light-mode .translation {
+      color: #777;
+    }
+    .toggle-btn {
+      margin: 0.3rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .light-mode .toggle-btn {
+      background-color: #ddd;
+      color: #333;
+    }
+    .hide {
+      display: none;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #777;
+      transition: color 0.3s;
+    }
+    .light-mode footer {
+      color: #555;
+    }
+    .phrase-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Toki Pona Symbol Viewer</h1>
+  <p>Type Toki Pona or English/Indonesian words (e.g., <code>ilo sona</code>, <code>computer</code>, <code>orang</code>)</p>
+  <textarea id="wordInput" rows="2" oninput="showSymbols()" placeholder="Enter words..."></textarea><br>
+  <button class="toggle-btn" onclick="toggleLang()">Translate: EN / ID</button>
+  <button class="toggle-btn" onclick="toggleSymbolOnly()">Symbol Only</button>
+  <button class="toggle-btn" onclick="toggleSymbolStyle()">Symbol Style</button>
+  <button class="toggle-btn" onclick="toggleDarkMode()">Dark/Light</button>
+
+  <div id="symbol"></div>
+
+  <footer>
+    Created by © <span id="year"></span>
+  </footer>
+
+  <script>
+    // Dictionary with multi-word phrases
+    const dictionary = {
+      "a": ["ah! ha! uh!", "ah! ha! uh! oh!"],
+      "akesi": ["reptile/amphibian", "reptil/amfibi"],
+      "ala": ["no/none", "tidak/bukan"],
+      "ale": ["all/everything", "semua/seluruh"],
+      "anpa": ["low/below", "rendah/di bawah"],
+      "ante": ["different", "berbeda"],
+      "anu": ["or", "atau"],
+      "awen": ["stay/wait", "tunggu/tetap"],
+      "e": ["(object marker)", "(penanda objek)"],
+      "en": ["and", "dan"],
+      "ilo sona": ["computer", "komputer"],
+      "jan pona": ["friend", "teman"],
+      "tomo tawa": ["car", "mobil"],
+      "telo nasa": ["alcohol", "alkohol"],
+      "moku lili": ["snack", "makanan ringan"]
+    };
+
+    // Create reverse dictionary for English/Indonesian lookups
+    const reverseDictionary = {};
+    for (const [key, [en, id]] of Object.entries(dictionary)) {
+      // Add both single words and phrases to reverse dictionary
+      en.split(/,\s*/).forEach(word => {
+        reverseDictionary[word.toLowerCase()] = key;
+        // Also add multi-word phrases split by spaces
+        if (word.includes(' ')) {
+          word.split(' ').forEach(w => {
+            if (!reverseDictionary[w.toLowerCase()]) {
+              reverseDictionary[w.toLowerCase()] = key;
+            }
+          });
+        }
+      });
+      id.split(/,\s*/).forEach(word => {
+        reverseDictionary[word.toLowerCase()] = key;
+        if (word.includes(' ')) {
+          word.split(' ').forEach(w => {
+            if (!reverseDictionary[w.toLowerCase()]) {
+              reverseDictionary[w.toLowerCase()] = key;
+            }
+          });
+        }
+      });
+    }
+
+    let lang = 0; // 0 = EN, 1 = ID
+    let symbolOnly = false;
+    let symbolStyle = 'pona'; // 'pona' or 'sitelen'
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim().toLowerCase();
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      // First check for exact phrase matches
+      const exactMatch = Object.keys(dictionary).find(tpPhrase => 
+        input === tpPhrase.toLowerCase() || 
+        dictionary[tpPhrase][0].toLowerCase() === input ||
+        dictionary[tpPhrase][1].toLowerCase() === input
+      );
+
+      if (exactMatch) {
+        displaySymbols(exactMatch.split(' '), exactMatch);
+        return;
+      }
+
+      // Check if input is a multi-word phrase in Toki Pona
+      const tpWords = input.split(/\s+/);
+      if (tpWords.every(word => dictionary[word])) {
+        displaySymbols(tpWords, tpWords.join(' '));
+        return;
+      }
+
+      // Check if input is an English/Indonesian phrase
+      const translatedPhrase = reverseDictionary[input];
+      if (translatedPhrase) {
+        displaySymbols(translatedPhrase.split(' '), translatedPhrase);
+        return;
+      }
+
+      // Fallback to word-by-word display
+      const wordsToDisplay = input.split(/\s+/).map(word => 
+        dictionary[word] ? word : reverseDictionary[word] || word
+      );
+      displaySymbols(wordsToDisplay, wordsToDisplay.join(' '));
+    }
+
+    function displaySymbols(words, originalPhrase) {
+      const symbolDiv = document.getElementById("symbol");
+      
+      // Container for the whole phrase
+      const phraseContainer = document.createElement("div");
+      phraseContainer.className = "phrase-container";
+
+      // Display each symbol in the phrase
+      words.forEach(word => {
+        if (!dictionary[word]) {
+          const notFound = document.createElement("div");
+          notFound.className = "symbol-container";
+          notFound.innerHTML = `<div style="color:#f55;font-weight:bold;">🚫 ${word}</div>`;
+          phraseContainer.appendChild(notFound);
+          return;
+        }
+
+        const img = new Image();
+        if (symbolStyle === 'pona') {
+          img.src = `https://sitelen.nimi.li/img/${word}.png`;
+        } else {
+          img.src = `https://nimi.li/internal/api/ss?word=${word}`;
+        }
+        img.alt = word;
+
+        const container = document.createElement("div");
+        container.className = "symbol-container";
+
+        const wordLabel = document.createElement("div");
+        wordLabel.className = "word-label";
+        wordLabel.textContent = word;
+
+        if (symbolOnly) {
+          wordLabel.classList.add("hide");
+        }
+
+        container.appendChild(img);
+        container.appendChild(wordLabel);
+        phraseContainer.appendChild(container);
+
+        img.onerror = () => {
+          container.innerHTML = `
+            <div style="width:20vw;max-width:96px;height:96px;background:#333;display:flex;align-items:center;justify-content:center;border-radius:8px;">❓</div>
+            ${symbolOnly ? "" : `<div class="word-label">${word}</div>`}
+          `;
+        };
+      });
+
+      symbolDiv.appendChild(phraseContainer);
+
+      // Add translation below the symbols
+      if (!symbolOnly) {
+        const translation = document.createElement("div");
+        translation.className = "translation";
+        translation.textContent = dictionary[originalPhrase] ? 
+          dictionary[originalPhrase][lang] : 
+          words.map(word => dictionary[word]?.[lang] || word).join(' ');
+        symbolDiv.appendChild(translation);
+      }
+    }
+
+    function toggleLang() {
+      lang = 1 - lang;
+      showSymbols();
+    }
+
+    function toggleSymbolOnly() {
+      symbolOnly = !symbolOnly;
+      showSymbols();
+    }
+
+    function toggleSymbolStyle() {
+      symbolStyle = (symbolStyle === 'pona') ? 'sitelen' : 'pona';
+      showSymbols();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('light-mode');
+      localStorage.setItem('lightMode', document.body.classList.contains('light-mode'));
+    }
+
+    // Initialize
+    if (localStorage.getItem('lightMode') === 'true') {
+      document.body.classList.add('light-mode');
+    }
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
