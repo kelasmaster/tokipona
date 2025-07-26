@@ -1,34 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sitelen Sitelen Renderer</title>
-  <link rel="stylesheet" href="https://kelasmaster.github.io/sitelen-sitelen-renderer/styles/sitelen-sitelen-renderer.css">
-  <style>
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: sans-serif;
-      background-color: #f0f0f0;
-    }
-    section[data-sitelen] {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-      max-width: 600px;
-      margin: auto;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Sitelen Sitelen Renderer</title>
+    
+    <!-- External Styles & Scripts -->
+    <link rel="stylesheet" href="https://kelasmaster.github.io/sitelen-sitelen-renderer/styles/sitelen-sitelen-renderer.css">
+    <script src="https://kelasmaster.github.io/sitelen-sitelen-renderer/dist/sitelen-sitelen-renderer.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            padding: 2em;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            margin: 1em auto;
+            display: block;
+        }
+
+        .wordmark {
+            color: red;
+        }
+
+        #sitelen {
+            border-radius: 1em;
+            margin: 0 auto;
+            width: 20em;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 1em;
+        }
+
+        #sitelen svg {
+            width: 100%;
+        }
+
+        #sitelen input {
+            margin: 1em auto;
+            display: block;
+            width: 50%;
+        }
+
+        #sitelen a {
+            text-align: center;
+            display: block;
+            margin: 1em 0;
+            width: 100%;
+        }
+
+        #tokiInput {
+            margin: 2em auto;
+            display: block;
+            font-size: 1em;
+            width: 20em;
+            padding: 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        #known-issues a {
+            display: block;
+        }
+
+        .text-container {
+            text-align: left;
+            margin: 0 auto;
+            width: 30em;
+        }
+    </style>
 </head>
 <body>
 
-  <section data-sitelen data-sitelen-ratio="1">
-    ale li jo e tenpo. ale li pona.
-  </section>
+    <div class="text-container">
+        <h1><span class="wordmark">Sitelen Sitelen</span> Renderer</h1>
 
-  <script type="text/javascript" src="https://kelasmaster.github.io/sitelen-sitelen-renderer/dist/sitelen-sitelen-renderer.min.js"></script>
+        <input type="text" id="tokiInput" placeholder="write toki pona here">
+
+        <div id="sitelen"></div>
+
+        <h2>Known Issues</h2>
+        <ul id="known-issues"></ul>
+    </div>
+
+    <!-- Render Input -->
+    <script>
+        window.onload = function () {
+            var input = document.getElementById('tokiInput');
+            input.addEventListener('input', renderInput);
+
+            function renderInput() {
+                var text = input.value;
+
+                var structuredSentence = sitelenParser.parse(text)[0];
+                document.getElementById('sitelen').innerHTML = '';
+
+                function customBackground() {
+                    var ns = 'http://www.w3.org/2000/svg';
+                    var rect = document.createElementNS(ns, 'rect');
+                    rect.style.width = '200%';
+                    rect.style.height = '200%';
+                    rect.style.x = '-100%';
+                    rect.style.y = '-100%';
+                    rect.style.fill = 'lightblue';
+                    rect.style.stroke = 'none';
+                    return rect;
+                }
+
+                sitelenRenderer.renderInteractiveSentence(structuredSentence, {
+                    // Optional settings:
+                    // output: {format: 'png', background: customBackground()},
+                    // shadow: true
+                });
+            }
+
+            // Set default text
+            input.value = 'pilin pona li pana e sijelo pona.';
+            renderInput();
+        };
+    </script>
+
+    <!-- Load GitHub Issues -->
+    <script>
+        function loadIssues() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('get', 'https://api.github.com/repos/olafjanssen/sitelen-sitelen-renderer/issues', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                var data = JSON.parse(xhr.response);
+                data.forEach(function (issue) {
+                    var listItem = document.createElement('li'),
+                        link = document.createElement('a');
+                    link.setAttribute('href', issue.html_url);
+                    link.setAttribute('target', '_blank');
+                    link.appendChild(document.createTextNode(issue.title));
+                    listItem.appendChild(link);
+                    document.getElementById('known-issues').appendChild(listItem);
+                });
+            };
+            xhr.send();
+        }
+
+        loadIssues();
+    </script>
 
 </body>
 </html>
