@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latin to sitelen pona Converter</title>
+    <link rel="stylesheet" href="https://kelasmaster.github.io/linja-pona/stylesheet.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --border: #bdc3c7;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f5f7fa;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-weight: normal;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .panel-title {
+            margin: 0;
+            color: var(--primary);
+            font-weight: normal;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            resize: none;
+            flex-grow: 1;
+            font-family: inherit;
+        }
+        
+        .output {
+            font-family: "linja pona";
+            font-size: 28px;
+            line-height: 1.4;
+            min-height: 300px;
+            flex-grow: 1;
+            padding: 12px;
+            background-color: var(--light);
+            border-radius: 6px;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .examples {
+            margin-top: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .example-card {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: pointer;
+        }
+        
+        .example-input {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .example-output {
+            font-family: "linja pona";
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Latin to sitelen pona</h1>
+        <p>Type in Latin script and see sitelen pona appear in real-time</p>
+    </header>
+    
+    <main class="linja-pona">
+        <div class="app-container">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Latin Input</h2>
+                </div>
+                <textarea id="input" placeholder="Type your toki pona text here..." autofocus></textarea>
+                <div class="controls">
+                    <button id="clear-btn">Clear</button>
+                    <button id="copy-btn">Copy Output</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">sitelen pona Output</h2>
+                </div>
+                <div id="output" class="output"></div>
+                <div class="controls">
+                    <button id="font-size-down">A-</button>
+                    <button id="font-size-up">A+</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h2>Common Phrases</h2>
+            <div class="example-grid">
+                <div class="example-card" onclick="insertExample('toki!')">
+                    <div class="example-input">toki!</div>
+                    <div class="example-output">toki!</div>
+                </div>
+                <div class="example-card" onclick="insertExample('sina pona')">
+                    <div class="example-input">sina pona</div>
+                    <div class="example-output">sina pona</div>
+                </div>
+                <div class="example-card" onclick="insertExample('mi olin e sina')">
+                    <div class="example-input">mi olin e sina</div>
+                    <div class="example-output">mi olin e sina</div>
+                </div>
+                <div class="example-card" onclick="insertExample('toki-pona li pona')">
+                    <div class="example-input">toki-pona li pona</div>
+                    <div class="example-output">toki-pona li pona</div>
+                </div>
+                <div class="example-card" onclick="insertExample('ma [_kasi_alasa_] li pona')">
+                    <div class="example-input">ma [_kasi_alasa_] li pona</div>
+                    <div class="example-output">ma [_kasi_alasa_] li pona</div>
+                </div>
+                <div class="example-card" onclick="insertExample('toki pi++pona')">
+                    <div class="example-input">toki pi++pona</div>
+                    <div class="example-output">toki pi++pona</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const input = document.getElementById('input');
+        const output = document.getElementById('output');
+        const clearBtn = document.getElementById('clear-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const fontSizeDown = document.getElementById('font-size-down');
+        const fontSizeUp = document.getElementById('font-size-up');
+        
+        let currentFontSize = 28;
+
+        // Update output as user types
+        input.addEventListener('input', updateOutput);
+
+        // Button event listeners
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            updateOutput();
+            input.focus();
+        });
+        
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(output.textContent)
+                .then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy Output';
+                    }, 2000);
+                });
+        });
+        
+        fontSizeDown.addEventListener('click', () => {
+            currentFontSize = Math.max(16, currentFontSize - 4);
+            output.style.fontSize = `${currentFontSize}px`;
+        });
+        
+        fontSizeUp.addEventListener('click', () => {
+            currentFontSize = Math.min(64, currentFontSize + 4);
+            output.style.fontSize = `${currentFontSize}px`;
+        });
+
+        function updateOutput() {
+            output.textContent = formatSitelenPona(input.value);
+        }
+
+        function formatSitelenPona(text) {
+            // Process cartouches first (most specific)
+            text = text.replace(/\[_([^\]]+)\]/g, function(match, group) {
+                const words = group.split('_').filter(Boolean);
+                return '[_' + words.join('_') + '_]';
+            });
+
+            // Process long pi
+            text = text.replace(/pi(\++|-+)/g, function(match, signs) {
+                const count = Math.min(signs.length, 3);
+                return 'pi' + signs[0].repeat(count);
+            });
+
+            // Process compound glyphs (replace both + and - with +)
+            text = text.replace(/(\w+)[+-](\w+)/g, '$1+$2');
+
+            return text;
+        }
+        
+        function insertExample(text) {
+            input.value = text;
+            updateOutput();
+            input.focus();
+        }
+        
+        // Initialize with some sample text
+        input.value = "toki!\nmi jan [__YOUR_NAME____].\nmi kama sona e toki-pona.";
+        updateOutput();
+    </script>
+</body>
+</html>
