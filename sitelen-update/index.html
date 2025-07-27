@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Toki Pona Symbol Viewer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 2rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.light-mode {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    input, textarea {
+      font-size: 1.3rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      width: 90%;
+      max-width: 500px;
+      margin-bottom: 1rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .light-mode input, .light-mode textarea {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    #symbol {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .symbol-container img {
+      width: 20vw;
+      max-width: 96px;
+      height: auto;
+      filter: drop-shadow(0 0 3px #00d1ff);
+    }
+    .word-label, .translation {
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: #aaa;
+      transition: color 0.3s;
+    }
+    .light-mode .word-label, .light-mode .translation {
+      color: #666;
+    }
+    .translation {
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+    .light-mode .translation {
+      color: #777;
+    }
+    .toggle-btn {
+      margin: 0.3rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .light-mode .toggle-btn {
+      background-color: #ddd;
+      color: #333;
+    }
+    .hide {
+      display: none;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #777;
+      transition: color 0.3s;
+    }
+    .light-mode footer {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Toki Pona Symbol Viewer</h1>
+  <p>Type Toki Pona or English/Indonesian words (e.g., <code>jan</code>, <code>orang</code>, <code>food</code>)</p>
+  <textarea id="wordInput" rows="2" oninput="showSymbols()" placeholder="Enter words..."></textarea><br>
+  <button class="toggle-btn" onclick="toggleLang()">Translate: EN / ID</button>
+  <button class="toggle-btn" onclick="toggleSymbolOnly()">Symbol Only</button>
+  <button class="toggle-btn" onclick="toggleSymbolStyle()">Switch Symbol Style</button>
+  <button class="toggle-btn" onclick="toggleDarkMode()">Toggle Dark/Light</button>
+
+  <div id="symbol"></div>
+
+  <footer>
+    Created by © <span id="year"></span>
+  </footer>
+
+  <script>
+    const dictionary = {
+  "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
+  "a a a": ["ha ha ha", "ha ha ha"],
+  "akesi": ["non-cute animal (reptile, amphibian)", "hewan bukan lucu (reptil, amfibi)"],
+  "ala": ["no, not, none, un-", "tidak, bukan, tidak ada"],
+  "ale": ["all, every, complete, abundance", "semua, seluruh, lengkap, banyak"],
+  "ale li pona": ["all is good", "semuanya baik"],
+  "ali": ["all, every, complete, abundance", "semua, seluruh, lengkap, banyak"],
+  "alasa": ["hunt, forage", "berburu, mencari"],
+  "anpa": ["bowing, low, beneath, defeated", "merunduk, di bawah, kalah"],
+  "ante": ["different, changed, other", "berbeda, berubah, lain"],
+  "anu": ["or (used in questions)", "atau (untuk pertanyaan)"],
+  "awen": ["enduring, kept, safe, staying", "bertahan, tetap, aman"],
+  "awen pona": ["patient", "sabar"],
+  "e": ["(object marker before direct object)", "(penanda objek)"],
+  "en": ["and (used between nouns)", "dan (antar kata benda)"],
+  "esun": ["market, shop, trade", "pasar, toko, berdagang"],
+  "ijo": ["thing, object, matter", "benda, hal"],
+  "ike": ["bad, negative, wrong, evil", "buruk, jahat"],
+  "ike lukin": ["ugly", "buruk rupa"],
+  "ilo": ["tool, device, machine", "alat, mesin"],
+  "ilo lape": ["sleeping pill", "obat tidur"],
+  "ilo lape soweli": ["animal anesthetic", "anestesi hewan"],
+  "ilo musi": ["toy", "mainan"],
+  "ilo nasa": ["drug", "narkotika"],
+  "ilo nasa wawa": ["strong drug", "obat kuat"],
+  "ilo pi sitelen tawa": ["television", "televisi"],
+  "ilo pi sitelen toki": ["pencil, pen", "pensil, pulpen"],
+  "ilo sona": ["computer", "komputer"],
+  "ilo toki": ["phone", "telepon"],
+  "insa": ["inside, contents, center", "dalam, isi"],
+  "jaki": ["dirty, gross, toxic", "kotor, menjijikkan"],
+  "jan": ["person, human, somebody", "orang, manusia"],
+  "jan Ken": ["Ken (person)", "Ken (orang)"],
+  "jan ala": ["no one", "tidak seorang pun"],
+  "jan ante": ["other person", "orang lain"],
+  "jan ike": ["bad person, enemy", "orang jahat/musuh"],
+  "jan kulupu": ["group member", "anggota kelompok"],
+  "jan lili": ["child", "anak"],
+  "jan nasa": ["strange, foolish, crazy person", "orang aneh, bodoh, gila"],
+  "jan olin": ["lover", "pacar, kekasih"],
+  "jan pi ma ante": ["foreigner", "warga negara asing"],
+  "jan pi ma sama": ["fellow citizen", "warga negara sama"],
+  "jan pi olin e meli": ["person who likes women", "orang yang menyukai perempuan"],
+  "jan pi olin e mije": ["person who likes men", "orang yang menyukai laki-laki"],
+  "jan pi pali moku": ["cook", "koki"],
+  "jan pi pali unpa": ["sex worker", "pekerja seks"],
+  "jan pi pana sona": ["teacher", "guru"],
+  "jan pi pona pilin": ["psychiatrist", "psikiater"],
+  "jan pi pona sijelo": ["doctor", "dokter"],
+  "jan pi tomo pali": ["office worker", "pegawai kantor"],
+  "jan pi tomo sama": ["roommate, housemate", "teman sekamar, serumah"],
+  "jan pona": ["friend", "teman"],
+  "jan sama": ["colleague", "rekan sejawat"],
+  "jan sewi": ["God, deity", "Tuhan"],
+  "jan sona": ["expert", "ahli"],
+  "jan sona nanpa": ["mathematician", "matematikawan"],
+  "jan sona pilin": ["psychologist", "psikolog"],
+  "jan sona sijelo": ["doctor", "dokter"],
+  "jan suli": ["adult", "orang dewasa"],
+  "jan toki": ["speaker", "pembicara"],
+  "jan unpa": ["sexual partner", "pasangan seksual"],
+  "jan utala": ["soldier", "tentara"],
+  "jelo": ["yellow", "kuning"],
+  "jo": ["have, contain", "memiliki, berisi"],
+  "jo e linja mute": ["have thick hair", "berambut tebal"],
+  "jo e mani mute": ["rich", "kaya"],
+  "jo e pilin pona": ["mentally healthy", "sehat mental"],
+  "jo e sijelo pona": ["physically healthy", "sehat fisik"],
+  "kala": ["fish, sea creature", "ikan, hewan laut"],
+  "kala lete": ["raw fish", "ikan mentah"],
+  "kalama": ["sound, noise", "suara, bunyi"],
+  "kama": ["to come, become, event", "datang, menjadi"],
+  "kama olin": ["fall in love", "jatuh cinta"],
+  "kama pona!": ["welcome!", "selamat datang!"],
+  "kasi": ["plant, vegetation", "tanaman"],
+  "kasi nasa": ["intoxicating plant", "tanaman memabukkan"],
+  "kasi wawa": ["spice", "rempah"],
+  "kepeken": ["with, by means of", "dengan, memakai"],
+  "kepeken ike e ilo nasa": ["drug abuse", "menyalahgunakan narkotika"],
+  "kepeken lili e ilo nasa": ["use small dose", "menggunakan dosis kecil"],
+  "kepeken utala": ["use violence", "menggunakan kekerasan"],
+  "ken": ["can, may, possibility", "bisa, mungkin"],
+  "kili": ["fruit, vegetable", "buah, sayuran"],
+  "kili lili": ["small fruit, vegetable", "buah, sayur kecil"],
+  "kili lili kiwen": ["nuts", "kacang"],
+  "kili loje": ["red fruit, vegetable", "buah, sayur merah"],
+  "kili ma": ["root vegetable", "buah, sayur tanah"],
+  "kili palisa": ["long fruit, vegetable", "buah, sayur panjang"],
+  "kili suwi": ["sweet fruit, vegetable", "buah, sayur manis"],
+  "kin": ["also, too, indeed", "juga, bahkan"],
+  "kipisi": ["to cut", "memotong"],
+  "kiwen": ["hard object, rock, metal", "keras, batu, logam"],
+  "ko": ["semi-solid, paste, powder", "lumpur, pasta, bubuk"],
+  "ko (walo) wawa": ["cocaine", "kokain"],
+  "kon": ["air, breath, spirit", "udara, napas, roh"],
+  "kon en sewi": ["weather", "cuaka"],
+  "kule": ["color, paint", "warna, cat"],
+  "kule lon palisa luka": ["nail polish", "kuteks"],
+  "kulupu": ["group, community", "kelompok, komunitas"],
+  "kulupu mama": ["family", "keluarga"],
+  "kute": ["hear, listen", "mendengar"],
+  "la": ["(context marker)", "(penanda konteks)"],
+  "lape": ["sleep, rest", "tidur, istirahat"],
+  "lape pona!": ["good night!", "selamat tidur!"],
+  "laso": ["blue, green", "biru, hijau"],
+  "lawa": ["head, lead", "kepala, memimpin"],
+  "lawa e pilin": ["control feelings", "mengendalikan perasaan"],
+  "len": ["clothing, fabric", "pakaian, kain"],
+  "len lawa": ["hat, headband", "topi, pita"],
+  "lete": ["cold, uncooked", "dingin, mentah"],
+  "lete li lon": ["cool, cold", "sejuk, dingin"],
+  "li": ["(verb marker)", "(penanda kata kerja)"],
+  "lili": ["small, little", "kecil"],
+  "linja": ["line, rope", "garis, tali"],
+  "linja lawa": ["hair", "rambut kepala"],
+  "linja lili oko": ["eyebrow", "alis"],
+  "linja sinpin": ["facial hair", "rambut wajah, janggut"],
+  "linja uta": ["mustache", "kumis"],
+  "lipu": ["paper, book", "kertas, buku"],
+  "lipu toki": ["document", "dokumen"],
+  "loje": ["red", "merah"],
+  "loje jelo": ["orange", "jingga"],
+  "loje laso": ["purple", "ungu"],
+  "loje walo": ["pink", "merah muda"],
+  "lon": ["true, present", "benar, ada"],
+  "lon tenpo pi pali ala": ["on leave", "cuti"],
+  "luka": ["hand, five", "tangan, lima"],
+  "lukin": ["see, look", "melihat"],
+  "lukin jo e pali": ["look for work", "mencari pekerjaan"],
+  "lupa": ["hole, opening", "lubang, pintu"],
+  "lupa jaki": ["anus", "anus"],
+  "lupa meli": ["vagina", "vagina"],
+  "lupa monsi": ["buttocks", "pantat"],
+  "lupa pi telo jelo": ["urethra", "uretra"],
+  "lupa tomo": ["door, window", "pintu, jendela"],
+  "ma": ["land, country", "tanah, negara"],
+  "ma ale": ["world", "dunia"],
+  "ma Alan": ["Ireland", "Irlandia"],
+  "ma Alensina": ["Argentina", "Argentina"],
+  "ma Amelika": ["America", "Amerika"],
+  "ma Ankola": ["Angola", "Angola"],
+  "ma Anku": ["Korea", "Korea"],
+  "ma Antasika": ["Antarctica", "Antarktika"],
+  "ma Antola": ["Andorra", "Andorra"],
+  "ma Apika": ["Africa", "Afrika"],
+  "ma Asija": ["Asia", "Asia"],
+  "ma Awisi": ["Haiti", "Haiti"],
+  "ma Ekato": ["Ecuador", "Ekuador"],
+  "ma Elena": ["Greece", "Yunani"],
+  "ma Eliteja": ["Eritrea", "Eritrea"],
+  "ma Elopa": ["Europe", "Eropa"],
+  "ma Epanja": ["Spain", "Spanyol"],
+  "ma Esalasi": ["Austria", "Austria"],
+  "ma Esi": ["Estonia", "Estonia"],
+  "ma Esuka": ["Basque Country", "Pais Vasco"],
+  "ma Ilakija": ["Iraq", "Irak"],
+  "ma Ilan": ["Iran", "Iran"],
+  "ma Inli": ["England", "Inggris"],
+  "ma Intonesija": ["Indonesia", "Indonesia"],
+  "ma Isale": ["Israel", "Israel"],
+  "ma Isijopija": ["Ethiopia", "Ethiopia"],
+  "ma Isilan": ["Iceland", "Islandia"],
+  "ma Italija": ["Italy", "Italia"],
+  "ma Jamanija": ["Yemen", "Yaman"],
+  "ma Juke": ["United Kingdom", "Britania Raya"],
+  "ma Kalalinuna": ["Greenland", "Greenland"],
+  "ma Kamelun": ["Cameroon", "Kamerun"],
+  "ma Kana": ["Ghana", "Ghana"],
+  "ma Kanata": ["Canada", "Kanada"],
+  "ma Kanpija": ["Gambia", "Gambia"],
+  "ma Kanpusi": ["Cambodia", "Kamboja"],
+  "ma Kanse": ["France", "Prancis"],
+  "ma Kapon": ["Gabon", "Gabon"],
+  "ma Katala": ["Catalonia", "Catalunya"],
+  "ma Katelo": ["Georgia", "Georgia"],
+  "ma Katemala": ["Guatemala", "Guatemala"],
+  "ma Kenata": ["Grenada", "Grenada"],
+  "ma Kenja": ["Kenya", "Kenya"],
+  "ma Kilipasi": ["Kiribati", "Kiribati"],
+  "ma Kine": ["Guinea", "Guinea"],
+  "ma Kinejekatolija": ["Equatorial Guinea", "Guinea Khatulistiwa"],
+  "ma Kinepisa": ["Guinea-Bissau", "Guinea-Bissau"],
+  "ma Kinla": ["Wales", "Wales"],
+  "ma Kiposi": ["Cyprus", "Siprus"],
+  "ma Komo": ["Comoros", "Komoro"],
+  "ma Kosalika": ["Costa Rica", "Kosta Rika"],
+  "ma Kosiwa": ["Ivory Coast", "Pantai Gading"],
+  "ma Kuli": ["Kurdistan", "Kurdistan"],
+  "ma Kupa": ["Cuba", "Kuba"],
+  "ma Kusala": ["Gujarat", "Gujarat"],
+  "ma Kuwasi": ["Kuwait", "Kuwait"],
+  "ma Lanka": ["Sri Lanka", "Sri Lanka"],
+  "ma Lapewija": ["Liberia", "Liberia"],
+  "ma Lawi": ["Latvia", "Latvia"],
+  "ma Lesoto": ["Lesotho", "Lesotho"],
+  "ma Lijatuwa": ["Lithuania", "Lithuania"],
+  "ma Lipija": ["Libya", "Libya"],
+  "ma Lisensan": ["Liechtenstein", "Liechtenstein"],
+  "ma Lomani": ["Romania", "Romania"],
+  "ma Losi": ["Russia", "Rusia"],
+  "ma Lowasi": ["Croatia", "Kroasia"],
+  "ma Lowenki": ["Slovakia", "Slovakia"],
+  "ma Lowensina": ["Slovenia", "Slovenia"],
+  "ma Lunpan": ["Lebanon", "Lebanon"],
+  "ma Lusepu": ["Luxembourg", "Luxemburg"],
+  "ma Luwanta": ["Rwanda", "Rwanda"],
+  "ma Maketonija": ["Macedonia", "Makedonia"],
+  "ma Malakasi": ["Madagascar", "Madagaskar"],
+  "ma Malasija": ["Malaysia", "Malaysia"],
+  "ma Malawi": ["Malawi", "Malawi"],
+  "ma Mali": ["Mali", "Mali"],
+  "ma Malipe": ["Morocco", "Maroko"],
+  "ma Masu": ["Egypt", "Mesir"],
+  "ma Mesiko": ["Mexico", "Meksiko"],
+  "ma Mewika": ["United States", "Amerika Serikat"],
+  "ma Mosanpi": ["Mozambique", "Mozambik"],
+  "ma Mosijo": ["Hungary", "Hungaria"],
+  "ma Motowa": ["Moldova", "Moldova"],
+  "ma Mowisi": ["Mauritius", "Mauritius"],
+  "ma Mulitanija": ["Mauritania", "Mauritania"],
+  "ma Namipija": ["Namibia", "Namibia"],
+  "ma Naselija": ["Nigeria", "Nigeria"],
+  "ma Netelan": ["Netherlands", "Belanda"],
+  "ma Nijon": ["Japan", "Jepang"],
+  "ma Nise": ["Niger", "Niger"],
+  "ma Nosiki": ["Norway", "Norwegia"],
+  "ma Nusila": ["New Zealand", "Selandia Baru"],
+  "ma Osejanija": ["Oceania", "Oseania"],
+  "ma Ontula": ["Honduras", "Honduras"],
+  "ma Oselija": ["Australia", "Australia"],
+  "ma Pakisan": ["Pakistan", "Pakistan"],
+  "ma Palakawi": ["Paraguay", "Paraguay"],
+  "ma Palani": ["Bahrain", "Bahrain"],
+  "ma Palata": ["India", "India"],
+  "ma Panama": ["Panama", "Panama"],
+  "ma Panla": ["Bangladesh", "Bangladesh"],
+  "ma Papeto": ["Barbados", "Barbados"],
+  "ma Papuwanijukini": ["Papua New Guinea", "Papua Nugini"],
+  "ma Pasila": ["Brazil", "Brazil"],
+  "ma Pawama": ["Bahamas", "Bahama"],
+  "ma Pelalusi": ["Belarus", "Belarus"],
+  "ma Pelu": ["Peru", "Peru"],
+  "ma Pemuta": ["Bermuda", "Bermuda"],
+  "ma Penen": ["Benin", "Benin"],
+  "ma Penesuwela": ["Venezuela", "Venezuela"],
+  "ma Pesije": ["Belgium", "Belgia"],
+  "ma Peson": ["Brittany", "Brittany"],
+  "ma Pilipina": ["Philippines", "Filipina"],
+  "ma Pilisin": ["Palestine", "Palestina"],
+  "ma Pisi": ["Fiji", "Fiji"],
+  "ma Po": ["Tibet", "Tibet"],
+  "ma Pokasi": ["Bulgaria", "Bulgaria"],
+  "ma Posan": ["Bosnia", "Bosnia"],
+  "ma Posuka": ["Poland", "Poland"],
+  "ma Posuwana": ["Botswana", "Botswana"],
+  "ma Potuke": ["Portugal", "Portugal"],
+  "ma Pukinapaso": ["Burkina Faso", "Burkina Faso"],
+  "ma suli": ["continent", "benua"],
+  "ma Samalino": ["San Marino", "San Marino"],
+  "ma Sameka": ["Jamaica", "Jamaica"],
+  "ma Samowa": ["Samoa", "Samoa"],
+  "ma Sanpija": ["Zambia", "Zambia"],
+  "ma Santapiken": ["Central African Republic", "Afrika Tengah"],
+  "ma Sasali": ["Algeria", "Algeria"],
+  "ma Sate": ["Chad", "Chad"],
+  "ma Sawasi": ["Eswatini", "Eswatini"],
+  "ma Sawusi": ["Saudi Arabia", "Arab Saudi"],
+  "ma Seki": ["Czech Republic", "Ceko"],
+  "ma Seneka": ["Senegal", "Senegal"],
+  "ma Setapika": ["South Africa", "Afrika Selatan"],
+  "ma Sijelalijon": ["Sierra Leone", "Sierra Leone"],
+  "ma Sile": ["Chile", "Chile"],
+  "ma Sinita": ["Trinidad and Tobago", "Trinidad dan Tobago"],
+  "ma Sinkapo": ["Singapore", "Singapura"],
+  "ma Sinpapuwe": ["Zimbabwe", "Zimbabwe"],
+  "ma Sipe": ["Albania", "Albania"],
+  "ma Sipusi": ["Djibouti", "Djibouti"],
+  "ma Somalija": ["Somalia", "Somalia"],
+  "ma Sonko": ["China", "Tiongkok"],
+  "ma Sopisi": ["Serbia", "Serbia"],
+  "ma Sukosi": ["Scotland", "Skotlandia"],
+  "ma Sulija": ["Syria", "Siria"],
+  "ma Sumi": ["Finland", "Finlandia"],
+  "ma Sutan": ["Sudan", "Sudan"],
+  "ma Suwasi": ["Switzerland", "Swiss"],
+  "ma Tansanija": ["Tanzania", "Tanzania"],
+  "ma Tansi": ["Denmark", "Denmark"],
+  "ma Tawi": ["Thailand", "Thailand"],
+  "ma tomo": ["city", "kota"],
+  "ma tomo Akajela": ["Cairo, Egypt", "Kairo, Mesir"],
+  "ma tomo Alana": ["Atlanta, USA", "Atlanta, AS"],
+  "ma tomo Alawa": ["Ottawa, Canada", "Ottawa, Kanada"],
+  "ma tomo Alipasi": ["Halifax, Canada", "Halifax, Kanada"],
+  "ma tomo Anpu": ["Hamburg, Germany", "Hamburg, Jerman"],
+  "ma tomo Ansetan": ["Amsterdam, Netherlands", "Amsterdam, Belanda"],
+  "ma tomo Asina": ["Athens, Greece", "Athena, Yunani"],
+  "ma tomo Ele": ["Los Angeles, USA", "Los Angeles, AS"],
+  "ma tomo Esupo": ["Espoo, Finland", "Espoo, Finlandia"],
+  "ma tomo Iwesun": ["Hilversum, Netherlands", "Hilversum, Belanda"],
+  "ma tomo Kakawi": ["Calgary, Canada", "Calgary, Kanada"],
+  "ma tomo Kasa": ["Gaza, Palestine", "Gaza, Palestina"],
+  "ma tomo Kenpisi": ["Cambridge, UK", "Cambridge, Inggris"],
+  "ma tomo Kunte": ["Bangkok, Thailand", "Bangkok, Thailand"],
+  "ma tomo lawa": ["capital city", "ibu kota"],
+  "ma tomo Lanten": ["London, UK", "London, Inggris"],
+  "ma tomo Lesinki": ["Helsinki, Finland", "Helsinki, Finlandia"],
+  "ma tomo Loma": ["Rome, Italy", "Roma, Italia"],
+  "ma tomo Manten": ["Moncton, Canada", "Moncton, Kanada"],
+  "ma tomo Mesiko": ["Mexico City, Mexico", "Kota Meksiko, Meksiko"],
+  "ma tomo Milano": ["Milan, Italy", "Milan, Italia"],
+  "ma tomo Minsen": ["Munich, Germany", "Munich, Jerman"],
+  "ma tomo Monkela": ["Montreal, Canada", "Montreal, Kanada"],
+  "ma tomo Napoli": ["Naples, Italy", "Napoli, Italia"],
+  "ma tomo Nujoka": ["New York, USA", "New York, AS"],
+  "ma tomo Osaka": ["Osaka, Japan", "Osaka, Jepang"],
+  "ma tomo Paki": ["Paris, France", "Paris, Prancis"],
+  "ma tomo Pasen": ["Boston, USA", "Boston, AS"],
+  "ma tomo Pelin": ["Berlin, Germany", "Berlin, Jerman"],
+  "ma tomo Peminan": ["Birmingham, UK", "Birmingham, Inggris"],
+  "ma tomo Pesin": ["Beijing, China", "Beijing, RRT"],
+  "ma tomo Pilense": ["Florence, Italy", "Firenze, Italia"],
+  "ma tomo Polan": ["Portland, USA", "Portland, AS"],
+  "ma tomo Putapesi": ["Budapest, Hungary", "Budapest, Hungaria"],
+  "ma tomo Sakata": ["Jakarta, Indonesia", "Jakarta, Indonesia"],
+  "ma tomo Sanpansiko": ["San Francisco, USA", "San Fransisco, AS"],
+  "ma tomo Sawi": ["Sackville, Canada", "Sackville, Kanada"],
+  "ma tomo Sene": ["Geneva, Switzerland", "Jenewa, Swiss"],
+  "ma tomo Sensan": ["St. John, Canada", "St. John, Kanada"],
+  "ma tomo Sesija": ["Shediac, Canada", "Shediac, Kanada"],
+  "ma tomo Sije": ["Dieppe, Canada", "Dieppe, Kanada"],
+  "ma tomo Solu": ["Seoul, South Korea", "Seoul, Korea Selatan"],
+  "ma tomo Tanpele": ["Tampere, Finland", "Tampere, Finlandia"],
+  "ma tomo Telawi": ["Tel Aviv, Israel", "Tel Aviv, Israel"],
+  "ma tomo Tokijo": ["Tokyo, Japan", "Tokyo, Jepang"],
+  "ma tomo Towano": ["Toronto, Canada", "Toronto, Kanada"],
+  "ma tomo Tuku": ["Turku, Finland", "Turku, Finlandia"],
+  "ma tomo Toko": ["Togo", "Togo"],
+  "ma tomo Tominika": ["Dominican Republic", "Republik Dominika"],
+  "ma tomo Tona": ["Tonga", "Tonga"],
+  "ma tomo Tosi": ["Germany", "Jerman"],
+  "ma tomo Tuki": ["Turkey", "Turki"],
+  "ma tomo Tunisi": ["Tunisia", "Tunisia"],
+  "ma tomo Tuwalu": ["Tuvalu", "Tuvalu"],
+  "ma tomo Ukanta": ["Uganda", "Uganda"],
+  "ma tomo Ukawina": ["Ukraine", "Ukraina"],
+  "ma tomo Ulukawi": ["Uruguay", "Uruguay"],
+  "ma tomo Uman": ["Oman", "Oman"],
+  "ma tomo Utun": ["Jordan", "Jordan"],
+  "ma tomo Vanuwatu": ["Vanuatu", "Vanuatu"],
+  "ma tomo Wankuwa": ["Vancouver, Canada", "Vancouver, Kanada"],
+  "ma tomo Wensa": ["Sweden", "Swedia"],
+  "ma tomo Wensa": ["Sweden", "Swedia"],
+  "ma tomo Wije": ["Vietnam", "Vietnam"],
+  "ma tomo Wenesija": ["Venice, Italy", "Venesia, Italia"],
+  "mani": ["money, value", "uang, nilai"],
+  "meli": ["woman", "perempuan"],
+  "meli lili": ["daughter", "putri"],
+  "meli olin": ["wife", "istri"],
+  "meli sama": ["sister", "saudari"],
+  "mi": ["I, me", "saya, aku"],
+  "mi mute": ["we, us", "kami"],
+  "mi olin e sina": ["I love you", "aku mencintaimu"],
+  "mije": ["man", "laki-laki"],
+  "mije lili": ["son", "putra"],
+  "mije olin": ["husband", "suami"],
+  "mije sama": ["brother", "saudara"],
+  "moku": ["eat, food", "makan, makanan"],
+  "moku ala": ["don't eat", "tidak makan"],
+  "moku e telo": ["drink", "minum"],
+  "moku lili": ["snack", "makanan ringan"],
+  "moku lili pi pilin pona mute": ["euphoria pill", "pil euphoria"],
+  "moku pona!": ["bon appétit!", "selamat makan!"],
+  "moku suwi": ["candy, chocolate", "permen, cokelat"],
+  "moku telo": ["soup", "sup"],
+  "moku walo": ["white food", "makanan putih"],
+  "moli": ["die, death", "mati"],
+  "monsi": ["back", "belakang"],
+  "monsi li lon": ["back is present", "punggung ada"],
+  "mu": ["(animal sound)", "(suara binatang)"],
+  "mun": ["moon, star", "bulan, bintang"],
+  "mun li pimeja": ["new moon", "bulan baru"],
+  "mun li sike": ["full moon", "bulan purnama"],
+  "musi": ["fun, play", "bersenang-senang, bermain"],
+  "mute": ["many, much", "banyak"],
+  "nasa": ["crazy, weird", "gila, aneh"],
+  "nasa lukin": ["look strange, funny", "terlihat aneh, lucu"],
+  "nasin": ["way, path", "jalan, cara"],
+  "nasin pona": ["Taoism", "Taoisme"],
+  "nasin pona Juju": ["Unitarian Universalism", "Universalisme Unitarian"],
+  "nasin pona Latapali": ["Rastafarianism", "Rastafarisme"],
+  "nasin sewi": ["religion", "agama"],
+  "nasin sewi Jawatu": ["Judaism", "Agama Yahudi"],
+  "nasin sewi Kolisu": ["Christianity", "Agama Kristen"],
+  "nasin sewi ma": ["Earth religion", "Agama Bumi"],
+  "nasin sewi Patapali": ["Pastafarianism", "Agama Pastafari"],
+  "nasin sewi Puta": ["Buddhism", "Agama Buddha"],
+  "nasin sewi Silami": ["Islam", "Agama Islam"],
+  "nena": ["bump, nose", "benjolan, hidung"],
+  "nena (lawa)": ["nose", "hidung"],
+  "nena lili pi nena mama": ["nipple", "puting"],
+  "nena lili unpa meli": ["clitoris", "klitoris"],
+  "nena mama": ["breast", "payudara"],
+  "nena suli li pana e ko seli": ["volcanic eruption", "gunung meletus"],
+  "ni": ["this, that", "ini, itu"],
+  "nimi": ["name, word", "nama, kata"],
+  "nimi mi li ...": ["my name is ...", "namaku adalah ..."],
+  "nimi sina li seme?": ["what is your name?", "namamu siapa?"],
+  "noka": ["foot, leg", "kaki"],
+  "o": ["hey!", "hai!"],
+  "oko": ["eye", "mata"],
+  "olin": ["love", "cinta"],
+  "ona": ["he, she, they", "dia, mereka"],
+  "ona li ike tawa mi": ["I don't like him, her", "aku tidak menyukainya"],
+  "ona li pona tawa mi": ["I like him, her", "aku menyukainya"],
+  "ona mute": ["they, them", "mereka"],
+  "open": ["open, begin", "buka, mulai"],
+  "pakala": ["break, damage", "rusak, celaka"],
+  "pakala!": ["damn!", "sial!"],
+  "pali": ["do, make", "melakukan, membuat"],
+  "pali ala": ["unemployed", "tidak bekerja"],
+  "pali e ike": ["do bad", "berbuat buruk"],
+  "pali e pona": ["do good", "berbuat baik"],
+  "palisa": ["long stick", "tongkat, batang"],
+  "palisa luka": ["finger", "jari tangan"],
+  "palisa mije": ["penis", "penis"],
+  "pan": ["bread, grain", "roti, gandum"],
+  "pana": ["give, release", "memberi, melepaskan"],
+  "pana e kon pona": ["laugh", "tertawa"],
+  "pana e moku tawa": ["feed", "memberi makan"],
+  "pana e pilin pona": ["give happiness", "memberikan kebahagiaan"],
+  "pana e sona": ["teach", "mengajar"],
+  "pi": ["of (modifier)", "dari (pengelompokan)"],
+  "pilin": ["feel, emotion", "perasaan, hati"],
+  "pilin ala": ["neutral feeling", "biasa saja"],
+  "pilin e ike jan": ["feel pity", "kasihan"],
+  "pilin e moli jan": ["grieve", "berduka"],
+  "pilin e weka jan": ["miss someone", "merindukan"],
+  "pilin ike": ["feel bad, sad", "merasa buruk, sedih"],
+  "pilin ike wawa": ["angry", "marah"],
+  "pilin nasa": ["feel strange, crazy", "merasa aneh, gila"],
+  "pilin pona": ["feel good, happy", "merasa baik, senang"],
+  "pilin pona mute": ["feel very good", "merasa sangat baik"],
+  "pilin wawa": ["energetic", "energik"],
+  "pimeja": ["black", "hitam"],
+  "pimeja li lon": ["dark, night", "gelap, malam"],
+  "pini": ["end, finish", "akhir, selesai"],
+  "pipi": ["insect", "serangga"],
+  "poka": ["side, with", "sisi, dengan"],
+  "poki": ["container", "wadah, kotak"],
+  "poki lete": ["refrigerator", "kulkas"],
+  "poki pi ijo ike": ["trash can", "tempat sampah"],
+  "poki seli": ["oven", "oven"],
+  "poki telo": ["sink, bathtub", "wastafel, bak mandi"],
+  "pona": ["good, simple", "baik, sederhana"],
+  "pona!": ["great!", "bagus!"],
+  "pona e pilin jan": ["encourage", "menyemangati"],
+  "pona lukin": ["handsome, beautiful", "tampan, cantik"],
+  "pona lukin mute": ["very good-looking", "sangat tampan, cantik"],
+  "pona moku": ["delicious", "lezat"],
+  "pona tawa sina": ["good for you", "baik untukmu"],
+  "sama": ["same, sibling", "sama, saudara"],
+  "seli": ["fire, heat", "api, panas"],
+  "seli li lon": ["warm, hot", "hangat, panas"],
+  "selo": ["outside, skin", "luar, kulit"],
+  "selo lon pini palisa kulup": ["foreskin", "kulup"],
+  "seme": ["what?", "apa?"],
+  "seme li sin?": ["what's new?", "apa yang baru?"],
+  "seme?": ["what?", "apa?"],
+  "sewi": ["sacred, high", "tinggi, suci"],
+  "sewi li lon": ["high is present", "tinggi ada"],
+  "sewi pi sinpin lawa": ["forehead", "dahi"],
+  "sijelo": ["body", "tubuh"],
+  "sike": ["circle, cycle", "lingkaran, siklus"],
+  "sike mama waso": ["egg", "telur"],
+  "sike mije tu": ["testicles", "buah zakar"],
+  "sin": ["new, another", "baru, lain"],
+  "sina": ["you", "kamu"],
+  "sina mute": ["you (plural)", "kalian"],
+  "sina pilin seme?": ["how are you?", "bagaimana perasaanmu?"],
+  "sina wile lape anu seme": ["Do you want to sleep?", "Apakah kamu ingin tidur?"],
+  "sinpin": ["front, face", "depan, wajah"],
+  "sinpin lawa": ["face", "wajah"],
+  "sipisi": ["piece, part", "potongan, bagian"],
+  "sitelen": ["image, write", "gambar, menulis"],
+  "sitelen pi toki Konso": ["Mandarin script", "tulisan Mandarin"],
+  "sitelen pi toki Nijon": ["Japanese script", "tulisan Jepang"],
+  "sitelen tawa": ["movie", "film"],
+  "sona": ["know, understand", "tahu, mengerti"],
+  "sona mute": ["smart", "pandai"],
+  "soweli": ["animal (land)", "hewan darat"],
+  "soweli ni li kama suli": ["This animal grows big", "Hewan ini menjadi besar"],
+  "soweli ni li moku": ["This animal eats", "Hewan ini makan"],
+  "suli": ["big, important", "besar, penting"],
+  "suno": ["sun, light", "matahari, cahaya"],
+  "suno li lon": ["sunny, day", "cerah, siang"],
+  "supa": ["surface, table", "permukaan, meja"],
+  "supa lape": ["bed", "tempat tidur"],
+  "supa lawa": ["pillow", "bantal"],
+  "supa moku": ["dining table", "meja makan"],
+  "supa monsi": ["chair, sofa", "kursi, sofa"],
+  "supa pali": ["desk", "meja kerja"],
+  "suwi": ["sweet, cute", "manis, lucu"],
+  "suwi lukin": ["cute", "imut"],
+  "tan": ["from, because", "dari, karena"],
+  "tan ni la mi wile tawa tomo sina": ["Because of this, I want to go to your house", "Karena ini, aku ingin pergi ke rumahmu"],
+  "tan seme": ["why?", "mengapa?"],
+  "tan seme?": ["why?", "mengapa?"],
+  "taso": ["but, only", "tapi, hanya"],
+  "tawa": ["go, move", "pergi, bergerak"],
+  "tawa pona": ["goodbye", "selamat jalan"],
+  "telo": ["water, liquid", "air, cairan"],
+  "telo jelo": ["urine", "urin"],
+  "telo kili": ["juice", "jus"],
+  "telo kiwen": ["ice", "es"],
+  "telo kiwen lili li kama": ["hail", "hujan es"],
+  "telo lete": ["cold water", "air dingin"],
+  "telo li kama": ["rain", "hujan"],
+  "telo lili li lon kon": ["humid", "lembab"],
+  "telo mama soweli": ["animal milk", "susu hewan"],
+  "telo nasa": ["alcohol", "alkohol"],
+  "telo nasa pi wawa ala": ["light alcohol", "minuman beralkohol ringan"],
+  "telo nasa wawa": ["strong alcohol", "minuman beralkohol kuat"],
+  "telo seli": ["hot drink", "minuman panas"],
+  "telo seli wawa": ["coffee", "kopi"],
+  "telo suli": ["ocean", "laut"],
+  "telo suli Sulu": ["Sulu Sea", "Laut Sulu"],
+  "telo wawa": ["energy drink", "minuman berenergi"],
+  "tenpo": ["time", "waktu"],
+  "tenpo ale": ["always", "selalu"],
+  "tenpo ala": ["never", "tidak pernah"],
+  "tenpo kama": ["future", "masa depan"],
+  "tenpo lete": ["winter", "musim dingin"],
+  "tenpo lili": ["moment", "sebentar"],
+  "tenpo moku": ["meal time", "waktu makan"],
+  "tenpo mun": ["month", "bulan"],
+  "tenpo ni": ["now", "sekarang"],
+  "tenpo pimeja": ["night", "malam"],
+  "tenpo pimeja ni la mi lape lon tomo pi jan pona mi": ["Tonight I sleep at my friend's house", "Malam ini aku tidur di rumah temanku"],
+  "tenpo pimeja pini la kalama ala li lon": ["Last night, there was no sound", "Kemarin malam, tidak ada suara"],
+  "tenpo pini": ["past", "masa lalu"],
+  "tenpo seli": ["summer", "musim panas"],
+  "tenpo sike": ["year", "tahun"],
+  "tenpo suno": ["day", "siang, hari"],
+  "tenpo suno kama": ["tomorrow", "besok"],
+  "tenpo suno luka tu": ["week", "pekan, minggu"],
+  "tenpo suno ni": ["today", "hari ini"],
+  "tenpo suno pini": ["yesterday", "kemarin"],
+  "tenpo suno sin": ["morning", "pagi"],
+  "tenpo telo": ["rainy season", "musim hujan"],
+  "toki": ["speak, language", "bicara, bahasa"],
+  "toki!": ["hello!", "halo!"],
+  "toki Alapi": ["Arabic language", "bahasa Arab"],
+  "toki Apiwili": ["Afrihili language", "bahasa Afrihili"],
+  "toki Apikan": ["Afrikaans language", "bahasa Afrikaans"],
+  "toki Awasa": ["Hausa language", "bahasa Hausa"],
+  "toki Elepen": ["Lingua Franca Nova", "Lingua Franca Nova"],
+  "toki Epelanto": ["Esperanto language", "bahasa Esperanto"],
+  "toki Inli": ["English language", "bahasa Inggris"],
+  "toki Inli luka": ["English sign system", "sistem isyarat bahasa Inggris"],
+  "toki Inli pona": ["Basic English", "bahasa Inggris dasar"],
+  "toki Inota": ["Lingua Ignota", "Lingua Ignota"],
+  "toki Insi": ["Hindi language", "bahasa Hindi"],
+  "toki Intelinwa": ["Interlingua", "Interlingua"],
+  "toki Inu": ["Inuit languages", "bahasa-bahasa Inuit"],
+  "toki Ipo": ["Igbo language", "bahasa Igbo"],
+  "toki Ito": ["Ido language", "bahasa Ido"],
+  "toki Iwisi": ["Hebrew language", "bahasa Ibrani"],
+  "toki Jolupa": ["Yoruba language", "bahasa Yoruba"],
+  "toki Kalike": ["Scottish Gaelic", "bahasa Gaelik Skotlandia"],
+  "toki Kantun": ["Cantonese language", "bahasa Kanton"],
+  "toki Kuwenya": ["Quenya language", "bahasa Quenya"],
+  "toki Latan": ["Laadan language", "bahasa Laadan"],
+  "toki Lasina": ["Latin language", "bahasa Latin"],
+  "toki Litepa": ["Lingwa de Planeta", "Lingwa de Planeta"],
+  "toki Losupan": ["Lojban language", "bahasa Lojban"],
+  "toki luka": ["sign language", "bahasa isyarat"],
+  "toki luka Kanse": ["French Sign Language", "bahasa isyarat Prancis"],
+  "toki luka Kepeka": ["Quebec Sign Language", "bahasa isyarat Quebec"],
+  "toki luka Mewika": ["American Sign Language", "bahasa isyarat Amerika Serikat"],
+  "toki luka Oselija": ["Australian Sign Language", "bahasa isyarat Australia"],
+  "toki luka Piten": ["British Sign Language", "bahasa isyarat Britania Raya"],
+  "toki luka Sonko": ["Chinese Sign Language", "bahasa isyarat Tiongkok"],
+  "toki luka Tosi": ["German Sign Language", "bahasa isyarat Jerman"],
+  "toki Mansi": ["Manti language", "bahasa Manti"],
+  "toki Nawi": ["Na'vi language", "bahasa Na'vi"],
+  "toki Nejo": ["Neo language", "bahasa Neo"],
+  "toki Nosiki": ["Bokmål (Norwegian)", "bahasa Bokmal"],
+  "toki Nosiki sin": ["Nynorsk (Norwegian)", "bahasa Nynorsk"],
+  "toki Olapi": ["Volapük language", "bahasa Volapuk"],
+  "toki Palepelen": ["Baleybelen language", "bahasa Baleybelen"],
+  "toki Pasiki": ["Fyksian language", "bahasa Fyksian"],
+  "toki pona": ["Toki Pona language", "Toki Pona"],
+  "toki pona luka": ["Toki Pona sign system", "sistem isyarat Toki Pona"],
+  "toki Sanpasa": ["Sambahsa language", "bahasa Sambahsa"],
+  "toki Selen": ["Seren language", "bahasa Seren"],
+  "toki Semisi": ["Semitish language", "bahasa Semitish"],
+  "toki Sesi": ["Tsez language", "bahasa Tsez"],
+  "toki Sikipe": ["Albanian language", "bahasa Albania"],
+  "toki Sinan": ["Klingon language", "bahasa Klingon"],
+  "toki sina li seme": ["What is your language?", "Bahasa kamu apa?"],
+  "toki sintalin": ["Sindarin language", "bahasa Sindarin"],
+  "toki sitelen Anlasi": ["nonlinear script (Unker)", "bahasa aksara nonlinear Unker"],
+  "toki sitelen Pisinpo": ["Blissymbol language", "bahasa Blissymbol"],
+  "toki Soleso": ["Solresol language", "bahasa Solresol"],
+  "toki Soma": ["Somish language", "bahasa Somish"],
+  "toki Tolome": ["Traume language", "bahasa Traume"],
+  "toki Topisin": ["Tok Pisin language", "bahasa Tok Pisin"],
+  "toki Tosulaki": ["Dothraki language", "bahasa Dothraki"],
+  "toki tawa sina": ["peace be with you", "damai bersamamu"],
+  "toki ike": ["say bad things", "berkata buruk"],
+  "toki pona": ["say good things", "berkata baik"],
+  "toki utala": ["argue", "berdebat"],
+  "tomo": ["house, building", "rumah, bangunan"],
+  "tomo lape": ["bedroom", "kamar tidur"],
+  "tomo lipu": ["library", "perpustakaan"],
+  "tomo mani": ["bank", "bank"],
+  "tomo moku": ["restaurant", "restoran"],
+  "tomo pali": ["office", "kantor"],
+  "tomo pi jan pona": ["friend's house", "rumah teman"],
+  "tomo sona": ["school", "sekolah"],
+  "tomo telo": ["bathroom", "kamar mandi"],
+  "tomo tawa": ["car", "mobil"],
+  "tomo unpa": ["brothel", "rumah pelacuran"],
+  "tu": ["two", "dua"],
+  "unpa": ["sex", "seks"],
+  "unpa lukin": ["sexy", "seksi"],
+  "uta": ["mouth", "mulut"],
+  "utala": ["fight", "bertarung"],
+  "walo": ["white", "putih"],
+  "walo uta": ["teeth", "gigi"],
+  "wan": ["one", "satu"],
+  "waso": ["bird", "burung"],
+  "wawa": ["power", "kuat, tenaga"],
+  "weka": ["away, absent", "tidak ada, jauh"],
+  "weka e ike jan": ["forgive", "memaafkan"],
+  "wile": ["want, need", "ingin, butuh"],
+  "wile ike": ["bad intention", "berniat buruk"],
+  "wile lape": ["sleepy", "mengantuk"],
+  "wile moku": ["hungry", "lapar"],
+  "wile moku e telo": ["thirsty", "haus"],
+  "wile moli": ["want to die", "ingin mati"],
+  "wile mute": ["crave", "mengidamkan"],
+  "wile mute ike": ["greedy", "tamak"],
+  "wile pali e ijo": ["bored", "bosan"],
+  "wile pona": ["good intention", "berniat baik"],
+  "wile unpa": ["horny", "bernafsu"],
+  "wile e pona tawa jan": ["wish well for someone", "berharap baik untuk orang"]
+    };
+
+    const reverseDictionary = {};
+    for (const [key, [en, id]] of Object.entries(dictionary)) {
+      en.split(/,\s*/).forEach(word => reverseDictionary[word.toLowerCase()] = key);
+      id.split(/,\s*/).forEach(word => reverseDictionary[word.toLowerCase()] = key);
+    }
+
+    let lang = 0; // 0 = EN, 1 = ID
+    let symbolOnly = false;
+    let symbolStyle = 'pona'; // 'pona' or 'sitelen'
+
+    function showSymbols() {
+      const input = document.getElementById("wordInput").value.trim();
+      // Split into words and ignore punctuation
+      const words = input.split(/[^\w']+/).filter(word => word.length > 0);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        const lowerWord = word.toLowerCase();
+        let tokiPonaWord = dictionary[lowerWord] ? lowerWord : reverseDictionary[lowerWord];
+
+        if (!tokiPonaWord) {
+          const notFound = document.createElement("div");
+          notFound.className = "symbol-container";
+          notFound.innerHTML = `<div style="color:#f55;font-weight:bold;">🚫 Word not found: "${word}"</div>`;
+          symbolDiv.appendChild(notFound);
+          return;
+        }
+
+        const img = new Image();
+        if (symbolStyle === 'pona') {
+          img.src = `https://sitelen.nimi.li/img/${tokiPonaWord}.png`;
+        } else {
+          img.src = `https://nimi.li/internal/api/ss?word=${tokiPonaWord}`;
+        }
+        img.alt = tokiPonaWord;
+
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+
+          const wordLabel = document.createElement("div");
+          wordLabel.className = "word-label";
+          wordLabel.textContent = tokiPonaWord;
+
+          const trans = document.createElement("div");
+          trans.className = "translation";
+          trans.textContent = dictionary[tokiPonaWord][lang];
+
+          if (symbolOnly) {
+            wordLabel.classList.add("hide");
+            trans.classList.add("hide");
+          }
+
+          container.appendChild(img);
+          container.appendChild(wordLabel);
+          container.appendChild(trans);
+          symbolDiv.appendChild(container);
+        };
+
+        img.onerror = () => {
+          const fallback = document.createElement("div");
+          fallback.className = "symbol-container";
+          fallback.innerHTML = `
+            <div style="width:20vw;max-width:96px;height:96px;background:#333;display:flex;align-items:center;justify-content:center;border-radius:8px;">❓</div>
+            ${symbolOnly ? "" : `<div class="word-label">${tokiPonaWord}</div>
+            <div class="translation">(symbol not found)</div>`}
+          `;
+          symbolDiv.appendChild(fallback);
+        };
+      });
+    }
+
+    function toggleLang() {
+      lang = 1 - lang;
+      showSymbols();
+    }
+
+    function toggleSymbolOnly() {
+      symbolOnly = !symbolOnly;
+      const labels = document.querySelectorAll('.word-label, .translation');
+      labels.forEach(el => el.classList.toggle('hide', symbolOnly));
+    }
+
+    function toggleSymbolStyle() {
+      symbolStyle = (symbolStyle === 'pona') ? 'sitelen' : 'pona';
+      showSymbols();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('light-mode');
+      localStorage.setItem('lightMode', document.body.classList.contains('light-mode'));
+    }
+
+    // Initialize
+    if (localStorage.getItem('lightMode') === 'true') {
+      document.body.classList.add('light-mode');
+    }
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
