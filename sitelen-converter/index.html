@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toki Pona Symbol Converter</title>
+  <style>
+    :root {
+      --primary: #3273dc;
+      --primary-hover: #276cda;
+      --text: #363636;
+      --border: #dbdbdb;
+      --shadow: 0 0.5em 1em -0.125em rgba(10,10,10,0.1);
+      --radius: 6px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      margin: 1.5rem 0 1rem;
+      text-align: center;
+    }
+    
+    .tab-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .tab-button {
+      padding: 0.5em 1em;
+      background-color: #eee;
+      color: #555;
+      border: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab-button.active {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .columns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    
+    .column {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .field {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    
+    .control {
+      position: relative;
+    }
+    
+    textarea, input {
+      width: 100%;
+      padding: 0.75em;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border-color 0.15s ease;
+      font-family: inherit;
+    }
+    
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    input[type="number"] {
+      max-width: 100px;
+    }
+    
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+    
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    
+    button {
+      padding: 0.5em 1em;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    button.secondary {
+      background-color: #666;
+    }
+    
+    button.secondary:hover {
+      background-color: #555;
+    }
+    
+    .output-container {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      background-color: white;
+      overflow-x: auto;
+    }
+    
+    canvas {
+      display: block;
+      background-color: white;
+    }
+    
+    #sitelen {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    #sitelen svg {
+      width: 100%;
+      height: auto;
+      max-height: 400px;
+    }
+    
+    .settings {
+      background-color: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    
+    .example-text {
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: underline;
+      margin: 0.5rem 0;
+      display: inline-block;
+    }
+    
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    
+    .modal.is-active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background-color: white;
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .footer {
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: #666;
+    }
+    
+    @font-face {
+      font-family: 'linja-pona';
+      src: url('https://cdn.jsdelivr.net/gh/janSame/linja-pona@latest/linja-pona-4.1.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    
+    .linja-pona {
+      font-family: 'linja-pona', sans-serif;
+    }
+    
+    .monospace {
+      font-family: monospace;
+    }
+    
+    .text-large {
+      font-size: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .columns {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Toki Pona Symbol Converter</h1>
+  
+  <div class="tab-container">
+    <button class="tab-button active" data-tab="sitelenpona-converter">Sitelen Pona</button>
+    <button class="tab-button" data-tab="sitelensitelen-converter">Sitelen Sitelen</button>
+  </div>
+  
+  <!-- Sitelen Pona Converter -->
+  <div id="sitelenpona-converter" class="tab-content active">
+    <div class="container">
+      <div class="columns">
+        <div class="column">
+          <div class="field">
+            <label for="text_input">Text (Latin alphabet)</label>
+            <div class="control">
+              <textarea id="text_input" placeholder="jan [_jo_utala_telo_olin]" spellcheck="false"></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column">
+          <div class="field">
+            <label for="font_size_input">Font size</label>
+            <div class="control">
+              <input type="number" id="font_size_input" value="40" min="10" max="100">
+            </div>
+          </div>
+          
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" id="wrap_input" checked>
+              Wrap text
+            </label>
+          </div>
+          
+          <div class="buttons">
+            <button id="copy_link_button">Copy link</button>
+            <button id="download_button">Download</button>
+            <button id="help_button" class="secondary">Help</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="output-container">
+        <p><strong>Sitelen Pona Output:</strong></p>
+        <canvas class="linja-pona" id="canvas"></canvas>
+      </div>
+    </div>
+    
+    <div class="modal" id="help_modal">
+      <div class="modal-content">
+        <button class="modal-close" id="modal_close">&times;</button>
+        <h2>Sitelen Pona Converter Help</h2>
+        <p>Type Toki Pona text in Latin alphabet in the input box.</p>
+        <p>Use hyphens to make compound words. <span class="monospace">kala-ali</span> turns into <span class="linja-pona text-large">kala-ali</span></p>
+        <p>Use square brackets and underscores to create cartouches. <span class="monospace">[_toki_o_sike_nimi]</span> turns into <span class="linja-pona text-large">[_toki_o_sike_nimi]</span></p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Sitelen Sitelen Converter -->
+  <div id="sitelensitelen-converter" class="tab-content">
+    <div class="container">
+      <div class="columns">
+        <div class="column">
+          <div class="field">
+            <label for="tokiInput">Enter Toki Pona text:</label>
+            <div class="control">
+              <textarea id="tokiInput" placeholder="jan Juto#" spellcheck="false"></textarea>
+            </div>
+            <div class="example-text" id="example1">Example 1: jan Juto#</div>
+            <div class="example-text" id="example2">Example 2: sitelen musi li lawa mi, lawa li pilin pona.</div>
+            <div class="example-text" id="example3">Example 3: O kama pona! Mi toki open e mi</div>
+          </div>
+          
+          <div class="buttons">
+            <button id="downloadButton">Download as PNG</button>
+            <button id="helpButton" class="secondary">Help</button>
+          </div>
+        </div>
+        
+        <div class="column">
+          <div class="settings">
+            <h3>Settings</h3>
+            <div class="checkbox">
+              <input type="checkbox" id="shadowToggle" checked>
+              <label for="shadowToggle">Enable shadows</label>
+            </div>
+            <div class="checkbox">
+              <input type="checkbox" id="colorToggle">
+              <label for="colorToggle">Colorful background</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="output-container">
+        <div id="sitelen"></div>
+      </div>
+    </div>
+    
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <h2>Sitelen Sitelen Converter Help</h2>
+        <p>This tool converts Toki Pona text into Sitelen Sitelen hieroglyphs.</p>
+        
+        <h3>How to use:</h3>
+        <p>1. Type Toki Pona text in the input box</p>
+        <p>2. The hieroglyphs will appear automatically</p>
+        <p>3. Click "Download as PNG" to save the image</p>
+        
+        <h3>Special syntax:</h3>
+        <p><strong>Cartouches:</strong> Use capital letter in beginning for names/proper nouns: <code>jan Juto</code></p>
+        <p><strong>Compound words:</strong> Use spaces between words: <code>tomo tawa</code></p>
+        
+        <h3>Examples:</h3>
+        <ul>
+          <li><code>mi olin e sina</code></li>
+          <li><code>jan Juto li pona</code></li>
+          <li><code>toki pona li pona</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+    <p>These tools are not officially associated with toki pona or Sonja Lang in any way.</p>
+  </footer>
+
+  <script>
+    // Tab switching functionality
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        button.classList.add('active');
+        document.getElementById(button.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Sitelen Pona Converter
+    class SitelenPonaConverter {
+      constructor() {
+        this.ready = false;
+        
+        // Elements
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.outputBox = document.querySelector('#sitelenpona-converter .output-container');
+        this.helpModal = document.getElementById('help_modal');
+        this.textInput = document.getElementById('text_input');
+        this.wrapInput = document.getElementById('wrap_input');
+        this.fontSizeInput = document.getElementById('font_size_input');
+        
+        // Event handlers
+        this.onFontSizeChange = this.onFontSizeChange.bind(this);
+        this.onTextChange = this.onTextChange.bind(this);
+        this.onWrapChange = this.onWrapChange.bind(this);
+        this.onDownload = this.onDownload.bind(this);
+        this.onHelp = this.onHelp.bind(this);
+        this.onCloseHelp = this.onCloseHelp.bind(this);
+        this.getCopyLinkText = this.getCopyLinkText.bind(this);
+        
+        // Initialize
+        this.fontSize = parseInt(this.fontSizeInput.value);
+        this.wrap = this.wrapInput.checked;
+      }
+      
+      async run() {
+        // Set up event listeners
+        this.fontSizeInput.addEventListener('input', this.onFontSizeChange);
+        this.textInput.addEventListener('input', this.onTextChange);
+        this.wrapInput.addEventListener('change', this.onWrapChange);
+        document.getElementById('download_button').addEventListener('click', this.onDownload);
+        document.getElementById('help_button').addEventListener('click', this.onHelp);
+        document.getElementById('modal_close').addEventListener('click', this.onCloseHelp);
+        this.helpModal.addEventListener('click', (e) => {
+          if (e.target === this.helpModal) this.onCloseHelp();
+        });
+        
+        // Set up copy link button
+        const copyButton = document.getElementById('copy_link_button');
+        copyButton.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(this.getCopyLinkText());
+            this.showTooltip(copyButton, 'Copied!');
+          } catch (err) {
+            this.showTooltip(copyButton, 'Not supported!');
+          }
+        });
+        
+        // Trigger initial render
+        this.wrapInput.dispatchEvent(new Event('change'));
+        this.fontSizeInput.dispatchEvent(new Event('input'));
+        this.textInput.dispatchEvent(new Event('input'));
+        
+        this.ready = true;
+        await this.redraw();
+      }
+      
+      showTooltip(element, message) {
+        const tooltip = document.createElement('div');
+        tooltip.textContent = message;
+        tooltip.style.position = 'absolute';
+        tooltip.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        tooltip.style.color = 'white';
+        tooltip.style.padding = '5px 10px';
+        tooltip.style.borderRadius = '4px';
+        tooltip.style.zIndex = '100';
+        
+        const rect = element.getBoundingClientRect();
+        tooltip.style.top = `${rect.top - 40}px`;
+        tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+        
+        document.body.appendChild(tooltip);
+        
+        setTimeout(() => {
+          document.body.removeChild(tooltip);
+        }, 2000);
+      }
+      
+      async onFontSizeChange() {
+        this.fontSize = parseInt(this.fontSizeInput.value);
+        await this.redraw();
+      }
+      
+      async onTextChange() {
+        // Auto-expand textarea
+        if (this.textInput.scrollHeight > this.textInput.clientHeight && 
+            this.textInput.clientHeight <= 250) {
+          this.textInput.style.height = this.textInput.scrollHeight + 10 + 'px';
+        }
+        await this.redraw();
+      }
+      
+      async onWrapChange() {
+        this.wrap = this.wrapInput.checked;
+        await this.redraw();
+      }
+      
+      onDownload() {
+        const dataURL = this.canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = (this.textInput.value || 'sitelen-pona') + '.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      getCopyLinkText() {
+        const [width, height, lines] = this.getData();
+        const params = new URLSearchParams({
+          w: width,
+          h: height,
+          f: this.fontSize,
+        });
+        
+        lines.forEach(line => {
+          params.append('l', btoa(line || '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''));
+        });
+        
+        return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      }
+      
+      onHelp() {
+        this.helpModal.style.display = 'flex';
+      }
+      
+      onCloseHelp() {
+        this.helpModal.style.display = 'none';
+      }
+      
+      getData() {
+        const style = window.getComputedStyle(this.outputBox);
+        const maxWidth = this.wrap ? 
+          this.outputBox.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 20 : 
+          Infinity;
+        
+        const lines = [];
+        let maxLineWidth = 0;
+        
+        // Split text into lines with word wrapping
+        for (const paragraph of this.textInput.value.split('\n')) {
+          lines.push('');
+          
+          for (const word of paragraph.split(' ')) {
+            const testLine = lines[lines.length - 1] + word + ' ';
+            const testWidth = this.ctx.measureText(testLine).width;
+            
+            if (testWidth > maxLineWidth) maxLineWidth = testWidth;
+            
+            if (testWidth > maxWidth && lines[lines.length - 1]) {
+              lines.push('');
+              lines[lines.length - 1] = word + ' ';
+            } else {
+              lines[lines.length - 1] = testLine;
+            }
+          }
+          
+          // Trim trailing space
+          lines[lines.length - 1] = lines[lines.length - 1].trim();
+        }
+        
+        // Calculate canvas dimensions
+        const width = (this.wrap && maxLineWidth > maxWidth ? maxWidth : maxLineWidth) + 20;
+        const height = 10 + this.fontSize * lines.length * 1.25;
+        
+        return [width, height, lines.map(line => line.trim())];
+      }
+      
+      async redraw() {
+        if (!this.ready) return;
+        
+        const [width, height, lines] = this.getData();
+        
+        // Set canvas dimensions
+        this.canvas.width = width;
+        this.canvas.height = height;
+        
+        // Set font
+        this.ctx.font = `${this.fontSize}px linja-pona`;
+        this.ctx.textBaseline = 'top';
+        
+        // Draw white background
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw text
+        this.ctx.fillStyle = 'black';
+        lines.forEach((line, i) => {
+          this.ctx.fillText(line, 10, 10 + i * this.fontSize * 1.25);
+        });
+      }
+    }
+    
+    // Sitelen Sitelen Converter
+    function customBackground(color) {
+      var ns = 'http://www.w3.org/2000/svg';
+      var rect = document.createElementNS(ns, 'rect');
+      rect.style.width = '200%';
+      rect.style.height = '200%';
+      rect.style.x = '-100%';
+      rect.style.y = '-100%';
+      rect.style.fill = color || 'lightblue';
+      rect.style.stroke = 'none';
+      return rect;
+    }
+    
+    function renderInput() {
+      var text = document.getElementById('tokiInput').value;
+      var structuredSentence = sitelenParser.parse(text)[0];
+      document.getElementById('sitelen').innerHTML = '';
+      
+      var options = {
+        shadow: document.getElementById('shadowToggle').checked
+      };
+      
+      if (document.getElementById('colorToggle').checked) {
+        options.output = {
+          format: 'png',
+          background: customBackground(getRandomColor())
+        };
+      }
+      
+      sitelenRenderer.renderInteractiveSentence(structuredSentence, options);
+    }
+    
+    function getRandomColor() {
+      const colors = [
+        '#FFDDC1', '#C1FFD7', '#C1E0FF', '#F0C1FF', 
+        '#FFF5C1', '#C1FFF5', '#E8C1FF', '#C1FFE8'
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function downloadAsPNG() {
+      // Find the SVG element
+      const svgElement = document.querySelector('#sitelen svg');
+      if (!svgElement) return;
+      
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Get SVG dimensions
+      const width = svgElement.width.baseVal.value;
+      const height = svgElement.height.baseVal.value;
+      
+      // Set canvas dimensions
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Create an image from the SVG
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const img = new Image();
+      const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = function() {
+        // Draw the image on canvas
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        
+        // Create download link
+        const downloadLink = document.createElement('a');
+        const text = document.getElementById('tokiInput').value || 'sitelen-sitelen';
+        const filename = text.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') + '.png';
+        
+        downloadLink.href = canvas.toDataURL('image/png');
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      };
+      
+      img.src = url;
+    }
+    
+    // Initialize the apps when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Sitelen Pona Converter
+      const converter = new SitelenPonaConverter();
+      converter.run().catch(err => console.error(err));
+      
+      // Initialize Sitelen Sitelen Converter
+      // Load external scripts
+      const script1 = document.createElement('script');
+      script1.src = 'https://kelasmaster.github.io/tokipona/sitelensitelen.js';
+      document.head.appendChild(script1);
+      
+      script1.onload = () => {
+        // Set up event listeners for Sitelen Sitelen
+        const helpModal = document.getElementById('helpModal');
+        document.getElementById('helpButton').addEventListener('click', () => {
+          helpModal.style.display = 'flex';
+        });
+        document.getElementById('modalClose').addEventListener('click', () => {
+          helpModal.style.display = 'none';
+        });
+        helpModal.addEventListener('click', (e) => {
+          if (e.target === helpModal) helpModal.style.display = 'none';
+        });
+        
+        // Example text handlers
+        document.getElementById('example1').addEventListener('click', () => {
+          document.getElementById('tokiInput').value = 'jan Juto#';
+          document.getElementById('tokiInput').dispatchEvent(new Event('input'));
+        });
+        
+        document.getElementById('example2').addEventListener('click', () => {
+          document.getElementById('tokiInput').value = 'sitelen musi li lawa mi, lawa li pilin pona.';
+          document.getElementById('tokiInput').dispatchEvent(new Event('input'));
+        });
+        
+        document.getElementById('example3').addEventListener('click', () => {
+          document.getElementById('tokiInput').value = 'O kama pona! Mi toki open e mi';
+          document.getElementById('tokiInput').dispatchEvent(new Event('input'));
+        });
+        
+        // Download button handler
+        document.getElementById('downloadButton').addEventListener('click', downloadAsPNG);
+        
+        // Set up event listeners
+        document.getElementById('tokiInput').addEventListener('input', renderInput);
+        document.getElementById('shadowToggle').addEventListener('change', renderInput);
+        document.getElementById('colorToggle').addEventListener('change', renderInput);
+        
+        // Set default text and render
+        document.getElementById('tokiInput').value = 'jan Juto#';
+        document.getElementById('tokiInput').dispatchEvent(new Event('input'));
+      };
+    });
+  </script>
+</body>
+</html>
