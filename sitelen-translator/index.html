@@ -268,9 +268,36 @@
             margin-top: 10px;
             line-height: 1.4;
         }
+         .output-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .output-actions button, 
+        .output-actions a {
+            flex: 1 1 auto;
+            min-width: 0;
+            text-align: center;
+        }
+        
+        .output-actions a {
+            text-decoration: none;
+        }
+        
+        /* Mobile specific styles */
         @media (max-width: 480px) {
-    /* Mobile-specific styles */
-}
+            .output-actions button, 
+            .output-actions a {
+                flex: 1 1 100%;
+            }
+            
+            .output-actions {
+                flex-direction: column;
+                gap: 6px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -321,8 +348,8 @@
                 <div class="symbol-canvas linja-pona" id="sitelenPonaText"></div>
                 <div class="output-actions">
                     <button id="downloadSitelenPona">Download as Image</button>
-                  <a href="https://tokiponasitelen.blogspot.com" target="_blank">
-                        <button>Sitelen Sitelen Converter</button>
+                  <a href="https://tokiponasitelen.blogspot.com" target="_blank" class="sitelen-sitelen-btn">
+                        <button style="width: 100%;">Sitelen Sitelen Converter</button>
                     </a>
                 </div>
                 <div class="instructions">
