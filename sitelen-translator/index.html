@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toki Pona Translator</title>
-    <!-- Include Sitelen Sitelen renderer -->
     <script src="https://kelasmaster.github.io/tokipona/sitelensitelen.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -230,6 +229,8 @@
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
         }
         
         .symbol-output {
@@ -282,7 +283,6 @@
     </style>
 </head>
 <body>
-    <body>
     <header>
         <div class="container">
             <h1>Toki Pona Translator</h1>
@@ -356,7 +356,7 @@
     </footer>
 
     <script>
-         // Current year for footer
+        // Current year for footer
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
         // Smaller Toki Pona dictionary sample
@@ -480,421 +480,416 @@
             "wile": ["want, need", "ingin, butuh"]
         };
 
-        // DOM elements
-        const inputText = document.getElementById('inputText');
-        const outputText = document.getElementById('outputText');
-        const translateBtn = document.getElementById('translateBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const suggestions = document.getElementById('suggestions');
-        const inputLangDisplay = document.getElementById('inputLangDisplay');
-        const outputLangDisplay = document.getElementById('outputLangDisplay');
-        const symbolButtons = document.getElementById('symbolButtons');
-        const sitelenPonaBtn = document.getElementById('sitelenPonaBtn');
-        const sitelenSitelenBtn = document.getElementById('sitelenSitelenBtn');
-        const sitelenPonaOutput = document.getElementById('sitelenPonaOutput');
-        const sitelenSitelenOutput = document.getElementById('sitelenSitelenOutput');
-        const sitelenPonaText = document.getElementById('sitelenPonaText');
-        const sitelenSitelenText = document.getElementById('sitelenSitelenText');
-        const downloadSitelenPona = document.getElementById('downloadSitelenPona');
-        const downloadSitelenSitelen = document.getElementById('downloadSitelenSitelen');
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const translateBtn = document.getElementById('translateBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const suggestions = document.getElementById('suggestions');
+            const inputLangDisplay = document.getElementById('inputLangDisplay');
+            const outputLangDisplay = document.getElementById('outputLangDisplay');
+            const symbolButtons = document.getElementById('symbolButtons');
+            const sitelenPonaBtn = document.getElementById('sitelenPonaBtn');
+            const sitelenSitelenBtn = document.getElementById('sitelenSitelenBtn');
+            const sitelenPonaOutput = document.getElementById('sitelenPonaOutput');
+            const sitelenSitelenOutput = document.getElementById('sitelenSitelenOutput');
+            const sitelenPonaText = document.getElementById('sitelenPonaText');
+            const sitelenSitelenText = document.getElementById('sitelenSitelenText');
+            const downloadSitelenPona = document.getElementById('downloadSitelenPona');
+            const downloadSitelenSitelen = document.getElementById('downloadSitelenSitelen');
 
-        // Input language buttons
-        const setInputToki = document.getElementById('setInputToki');
-        const setInputEnglish = document.getElementById('setInputEnglish');
-        const setInputIndonesian = document.getElementById('setInputIndonesian');
+            // Input language buttons
+            const setInputToki = document.getElementById('setInputToki');
+            const setInputEnglish = document.getElementById('setInputEnglish');
+            const setInputIndonesian = document.getElementById('setInputIndonesian');
 
-        // Output language buttons
-        const outputEnglish = document.getElementById('outputEnglish');
-        const outputIndonesian = document.getElementById('outputIndonesian');
-        const outputTokiPona = document.getElementById('outputTokiPona');
+            // Output language buttons
+            const outputEnglish = document.getElementById('outputEnglish');
+            const outputIndonesian = document.getElementById('outputIndonesian');
+            const outputTokiPona = document.getElementById('outputTokiPona');
 
-        // State variables
-        let currentInputLanguage = 'toki'; // 'toki', 'en', 'id'
-        let currentOutputLanguage = 'en'; // 'en', 'id', 'toki'
+            // State variables
+            let currentInputLanguage = 'toki'; // 'toki', 'en', 'id'
+            let currentOutputLanguage = 'en'; // 'en', 'id', 'toki'
 
-        // Set input language
-        function setInputLanguage(lang) {
-            currentInputLanguage = lang;
-            inputLangDisplay.textContent = 
-                lang === 'toki' ? 'Toki Pona' : 
-                lang === 'en' ? 'English' : 'Indonesian';
-            
-            // Update button states
-            setInputToki.classList.toggle('active', lang === 'toki');
-            setInputEnglish.classList.toggle('active', lang === 'en');
-            setInputIndonesian.classList.toggle('active', lang === 'id');
-            
-            // Update placeholder text
-            inputText.placeholder = lang === 'toki' ? 'Enter Toki Pona text here...' : 
-                                   lang === 'en' ? 'Enter English text here...' : 
-                                   'Enter Indonesian text here...';
-            
-            // Show/hide symbol buttons based on input language
-            if (lang === 'toki') {
-                symbolButtons.style.display = 'flex';
-            } else {
-                symbolButtons.style.display = 'none';
-                document.getElementById('symbolConverters').classList.remove('active');
-            }
-        }
-
-        // Set output language
-        function setOutputLanguage(lang) {
-            currentOutputLanguage = lang;
-            outputLangDisplay.textContent = 
-                lang === 'en' ? 'English' : 
-                lang === 'id' ? 'Indonesian' : 'Toki Pona';
-            
-            // Update button states
-            outputEnglish.classList.toggle('active', lang === 'en');
-            outputIndonesian.classList.toggle('active', lang === 'id');
-            outputTokiPona.classList.toggle('active', lang === 'toki');
-            
-            // If there's already a translation, update it
-            if (outputText.value) {
-                translateText();
-            }
-        }
-
-        // Initialize languages
-        setInputLanguage('toki');
-        setOutputLanguage('en');
-
-        // Event listeners for input language buttons
-        setInputToki.addEventListener('click', () => setInputLanguage('toki'));
-        setInputEnglish.addEventListener('click', () => setInputLanguage('en'));
-        setInputIndonesian.addEventListener('click', () => setInputLanguage('id'));
-
-        // Event listeners for output language buttons
-        outputEnglish.addEventListener('click', () => setOutputLanguage('en'));
-        outputIndonesian.addEventListener('click', () => setOutputLanguage('id'));
-        outputTokiPona.addEventListener('click', () => setOutputLanguage('toki'));
-
-        // Show word suggestions based on input
-        inputText.addEventListener('input', function() {
-            const text = this.value;
-            const lastWord = text.split(/\s+/).pop().toLowerCase();
-            
-            if (lastWord.length < 2) {
-                suggestions.style.display = 'none';
-                return;
-            }
-            
-            // Filter dictionary for matches
-            const matches = Object.keys(nimi).filter(word => 
-                word.toLowerCase().startsWith(lastWord))
-                .slice(0, 10); // Limit to 10 suggestions
-            
-            if (matches.length === 0) {
-                suggestions.style.display = 'none';
-                return;
-            }
-            
-            // Display suggestions
-            suggestions.innerHTML = '';
-            matches.forEach(word => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.textContent = word;
-                div.addEventListener('click', () => {
-                    const parts = text.split(/\s+/);
-                    parts[parts.length - 1] = word;
-                    this.value = parts.join(' ') + ' ';
-                    suggestions.style.display = 'none';
-                    this.focus();
-                });
-                suggestions.appendChild(div);
-            });
-            
-            suggestions.style.display = 'block';
-        });
-
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', function(e) {
-            if (e.target !== inputText) {
-                suggestions.style.display = 'none';
-            }
-        });
-
-        // Translate Toki Pona to English/Indonesian
-        function translateTokiPona(text, targetLang) {
-            // Split into words while preserving punctuation and tags
-            const words = text.split(/(\s+|\W+)/);
-            
-            return words.map(word => {
-                // Skip whitespace and punctuation
-                if (!word.trim() || /^\W+$/.test(word)) {
-                    return word;
-                }
+            // Set input language
+            function setInputLanguage(lang) {
+                currentInputLanguage = lang;
+                inputLangDisplay.textContent = 
+                    lang === 'toki' ? 'Toki Pona' : 
+                    lang === 'en' ? 'English' : 'Indonesian';
                 
-                const lowerWord = word.toLowerCase();
+                // Update button states
+                setInputToki.classList.toggle('active', lang === 'toki');
+                setInputEnglish.classList.toggle('active', lang === 'en');
+                setInputIndonesian.classList.toggle('active', lang === 'id');
                 
-                // Check if word is in dictionary
-                if (nimi.hasOwnProperty(lowerWord)) {
-                    const translations = nimi[lowerWord];
-                    // Return translation based on target language
-                    return targetLang === 'en' ? translations[0] : translations[1] || translations[0];
-                }
+                // Update placeholder text
+                inputText.placeholder = lang === 'toki' ? 'Enter Toki Pona text here...' : 
+                                       lang === 'en' ? 'Enter English text here...' : 
+                                       'Enter Indonesian text here...';
                 
-                // Special cases for common particles
-                const specialCases = {
-                    'li': targetLang === 'en' ? 'is' : 'adalah',
-                    'la': targetLang === 'en' ? "it's said" : "dikatakan",
-                    'e': targetLang === 'en' ? 'such' : 'seperti',
-                    'o': targetLang === 'en' ? '(command)' : '(perintah)'
-                };
-                
-                return specialCases[lowerWord] || word;
-            }).join('');
-        }
-
-        // Translate English/Indonesian to Toki Pona (simplified)
-        function translateToTokiPona(text, sourceLang) {
-            // This is a simplified approach - in a real app you'd need a more sophisticated system
-            const words = text.split(/(\s+|\W+)/);
-            
-            // Find Toki Pona words that match the English/Indonesian meaning
-            return words.map(word => {
-                if (!word.trim() || /^\W+$/.test(word)) {
-                    return word;
-                }
-                
-                const lowerWord = word.toLowerCase();
-                
-                // Search the dictionary for matches
-                for (const [tokiWord, translations] of Object.entries(nimi)) {
-                    if (sourceLang === 'en' && translations[0].toLowerCase().includes(lowerWord)) {
-                        return tokiWord;
-                    }
-                    if (sourceLang === 'id' && translations[1] && translations[1].toLowerCase().includes(lowerWord)) {
-                        return tokiWord;
-                    }
-                }
-                
-                return word;
-            }).join('');
-        }
-
-        // Handle translation
-        function translateText() {
-            const text = inputText.value.trim();
-            
-            if (!text) {
-                alert('Please enter some text to translate');
-                return;
-            }
-            
-            // Show loading indicator
-            loadingIndicator.style.display = 'block';
-            
-            // Simulate processing delay (remove in production)
-            setTimeout(() => {
-                let translation;
-                
-                if (currentInputLanguage === 'toki') {
-                    // Translate from Toki Pona to English/Indonesian/Toki Pona
-                    if (currentOutputLanguage === 'toki') {
-                        translation = text; // No translation needed
-                    } else {
-                        translation = translateTokiPona(text, currentOutputLanguage);
-                    }
+                // Show/hide symbol buttons based on input language
+                if (lang === 'toki') {
+                    symbolButtons.style.display = 'flex';
                 } else {
-                    // Translate from English/Indonesian to Toki Pona
-                    translation = translateToTokiPona(text, currentInputLanguage);
-                    
-                    // If output language is not Toki Pona (translate to English/Indonesian)
-                    if (currentOutputLanguage !== 'toki') {
-                        translation = translateTokiPona(translation, currentOutputLanguage);
-                    }
+                    symbolButtons.style.display = 'none';
+                    document.getElementById('symbolConverters').classList.remove('active');
+                }
+            }
+
+            // Set output language
+            function setOutputLanguage(lang) {
+                currentOutputLanguage = lang;
+                outputLangDisplay.textContent = 
+                    lang === 'en' ? 'English' : 
+                    lang === 'id' ? 'Indonesian' : 'Toki Pona';
+                
+                // Update button states
+                outputEnglish.classList.toggle('active', lang === 'en');
+                outputIndonesian.classList.toggle('active', lang === 'id');
+                outputTokiPona.classList.toggle('active', lang === 'toki');
+                
+                // If there's already a translation, update it
+                if (outputText.value) {
+                    translateText();
+                }
+            }
+
+            // Initialize languages
+            setInputLanguage('toki');
+            setOutputLanguage('en');
+
+            // Event listeners for input language buttons
+            setInputToki.addEventListener('click', () => setInputLanguage('toki'));
+            setInputEnglish.addEventListener('click', () => setInputLanguage('en'));
+            setInputIndonesian.addEventListener('click', () => setInputLanguage('id'));
+
+            // Event listeners for output language buttons
+            outputEnglish.addEventListener('click', () => setOutputLanguage('en'));
+            outputIndonesian.addEventListener('click', () => setOutputLanguage('id'));
+            outputTokiPona.addEventListener('click', () => setOutputLanguage('toki'));
+
+            // Show word suggestions based on input
+            inputText.addEventListener('input', function() {
+                const text = this.value;
+                const lastWord = text.split(/\s+/).pop().toLowerCase();
+                
+                if (lastWord.length < 2) {
+                    suggestions.style.display = 'none';
+                    return;
                 }
                 
-                outputText.value = translation;
-                loadingIndicator.style.display = 'none';
-            }, 500);
-        }
-
-        // Handle translation button click
-        translateBtn.addEventListener('click', translateText);
-
-        // Handle copy button click
-        copyBtn.addEventListener('click', () => {
-            outputText.select();
-            document.execCommand('copy');
-            
-            // Visual feedback
-            const originalText = copyBtn.textContent;
-            copyBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyBtn.textContent = originalText;
-            }, 2000);
-        });
-
-        // Allow translation with Enter key (Shift+Enter for new line)
-        inputText.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                translateBtn.click();
-            }
-        });
-
-        // Sitelen Pona functions
-        function renderSitelenPona() {
-            const text = inputText.value.trim();
-            if (!text) return;
-            
-            sitelenPonaText.textContent = text;
-            sitelenPonaOutput.style.display = 'block';
-            sitelenSitelenOutput.style.display = 'none';
-            
-            // Show the container
-            document.getElementById('symbolConverters').classList.add('active');
-        }
-
-        function downloadSitelenPonaImage() {
-            // Create a canvas to render the text for download
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Set canvas dimensions
-            canvas.width = 800;
-            canvas.height = 200;
-            
-            // Set font
-            ctx.font = '40px linja-pona';
-            ctx.textBaseline = 'top';
-            
-            // Draw white background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw text
-            ctx.fillStyle = 'black';
-            ctx.fillText(sitelenPonaText.textContent, 10, 10);
-            
-            // Create download link
-            const dataURL = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = dataURL;
-            link.download = 'sitelen-pona.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        // Sitelen Sitelen functions
-        function renderSitelenSitelen() {
-            const text = inputText.value.trim();
-            if (!text) {
-                alert('Please enter some Toki Pona text first');
-                return;
-            }
-            
-            // Clear previous content
-            sitelenSitelenText.innerHTML = '';
-            
-            try {
-                // Use the Sitelen Sitelen renderer
-                console.log('Attempting to parse text:', text);
-                const structuredSentence = sitelenParser.parse(text)[0];
-                console.log('Parsed successfully:', structuredSentence);
+                // Filter dictionary for matches
+                const matches = Object.keys(nimi).filter(word => 
+                    word.toLowerCase().startsWith(lastWord))
+                    .slice(0, 10); // Limit to 10 suggestions
                 
-                // Render with default options
-                sitelenRenderer.renderInteractiveSentence(structuredSentence, {
-                    shadow: true,
-                    container: sitelenSitelenText
+                if (matches.length === 0) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                // Display suggestions
+                suggestions.innerHTML = '';
+                matches.forEach(word => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.textContent = word;
+                    div.addEventListener('click', () => {
+                        const parts = text.split(/\s+/);
+                        parts[parts.length - 1] = word;
+                        this.value = parts.join(' ') + ' ';
+                        suggestions.style.display = 'none';
+                        this.focus();
+                    });
+                    suggestions.appendChild(div);
                 });
                 
-                console.log('Rendering completed');
-                sitelenSitelenOutput.style.display = 'block';
-                sitelenPonaOutput.style.display = 'none';
+                suggestions.style.display = 'block';
+            });
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputText) {
+                    suggestions.style.display = 'none';
+                }
+            });
+
+            // Translate Toki Pona to English/Indonesian
+            function translateTokiPona(text, targetLang) {
+                // Split into words while preserving punctuation and tags
+                const words = text.split(/(\s+|\W+)/);
+                
+                return words.map(word => {
+                    // Skip whitespace and punctuation
+                    if (!word.trim() || /^\W+$/.test(word)) {
+                        return word;
+                    }
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Check if word is in dictionary
+                    if (nimi.hasOwnProperty(lowerWord)) {
+                        const translations = nimi[lowerWord];
+                        // Return translation based on target language
+                        return targetLang === 'en' ? translations[0] : translations[1] || translations[0];
+                    }
+                    
+                    // Special cases for common particles
+                    const specialCases = {
+                        'li': targetLang === 'en' ? 'is' : 'adalah',
+                        'la': targetLang === 'en' ? "it's said" : "dikatakan",
+                        'e': targetLang === 'en' ? 'such' : 'seperti',
+                        'o': targetLang === 'en' ? '(command)' : '(perintah)'
+                    };
+                    
+                    return specialCases[lowerWord] || word;
+                }).join('');
+            }
+
+            // Translate English/Indonesian to Toki Pona (simplified)
+            function translateToTokiPona(text, sourceLang) {
+                // This is a simplified approach - in a real app you'd need a more sophisticated system
+                const words = text.split(/(\s+|\W+)/);
+                
+                // Find Toki Pona words that match the English/Indonesian meaning
+                return words.map(word => {
+                    if (!word.trim() || /^\W+$/.test(word)) {
+                        return word;
+                    }
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Search the dictionary for matches
+                    for (const [tokiWord, translations] of Object.entries(nimi)) {
+                        if (sourceLang === 'en' && translations[0].toLowerCase().includes(lowerWord)) {
+                            return tokiWord;
+                        }
+                        if (sourceLang === 'id' && translations[1] && translations[1].toLowerCase().includes(lowerWord)) {
+                            return tokiWord;
+                        }
+                    }
+                    
+                    return word;
+                }).join('');
+            }
+
+            // Handle translation
+            function translateText() {
+                const text = inputText.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some text to translate');
+                    return;
+                }
+                
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                
+                // Simulate processing delay (remove in production)
+                setTimeout(() => {
+                    let translation;
+                    
+                    if (currentInputLanguage === 'toki') {
+                        // Translate from Toki Pona to English/Indonesian/Toki Pona
+                        if (currentOutputLanguage === 'toki') {
+                            translation = text; // No translation needed
+                        } else {
+                            translation = translateTokiPona(text, currentOutputLanguage);
+                        }
+                    } else {
+                        // Translate from English/Indonesian to Toki Pona
+                        translation = translateToTokiPona(text, currentInputLanguage);
+                        
+                        // If output language is not Toki Pona (translate to English/Indonesian)
+                        if (currentOutputLanguage !== 'toki') {
+                            translation = translateTokiPona(translation, currentOutputLanguage);
+                        }
+                    }
+                    
+                    outputText.value = translation;
+                    loadingIndicator.style.display = 'none';
+                }, 500);
+            }
+
+            // Handle translation button click
+            translateBtn.addEventListener('click', translateText);
+
+            // Handle copy button click
+            copyBtn.addEventListener('click', () => {
+                outputText.select();
+                document.execCommand('copy');
+                
+                // Visual feedback
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            });
+
+            // Allow translation with Enter key (Shift+Enter for new line)
+            inputText.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    translateBtn.click();
+                }
+            });
+
+            // Sitelen Pona functions
+            function renderSitelenPona() {
+                const text = inputText.value.trim();
+                if (!text) {
+                    alert('Please enter some Toki Pona text first');
+                    return;
+                }
+                
+                sitelenPonaText.textContent = text;
+                sitelenPonaOutput.style.display = 'block';
+                sitelenSitelenOutput.style.display = 'none';
                 
                 // Show the container
                 document.getElementById('symbolConverters').classList.add('active');
-            } catch (e) {
-                console.error("Error rendering Sitelen Sitelen:", e);
-                sitelenSitelenText.innerHTML = '<p>Error rendering Sitelen Sitelen. Please try simpler text.</p>';
-                document.getElementById('symbolConverters').classList.add('active');
             }
-        }
 
-        function downloadSitelenSitelenImage() {
-            const svgElement = sitelenSitelenText.querySelector('svg');
-            if (!svgElement) {
-                alert('No Sitelen Sitelen image to download');
-                return;
-            }
-            
-            try {
-                // Create a canvas element
+            function downloadSitelenPonaImage() {
+                // Create a canvas to render the text for download
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Get SVG dimensions
-                const width = svgElement.width.baseVal.value;
-                const height = svgElement.height.baseVal.value;
-                
                 // Set canvas dimensions
-                canvas.width = width;
-                canvas.height = height;
+                canvas.width = 800;
+                canvas.height = 200;
                 
-                // Create an image from the SVG
-                const svgData = new XMLSerializer().serializeToString(svgElement);
-                const img = new Image();
-                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-                const url = URL.createObjectURL(svgBlob);
+                // Set font
+                ctx.font = '40px linja-pona';
+                ctx.textBaseline = 'top';
                 
-                img.onload = function() {
-                    // Draw the image on canvas
-                    ctx.drawImage(img, 0, 0);
-                    URL.revokeObjectURL(url);
-                    
-                    // Create download link
-                    const downloadLink = document.createElement('a');
-                    const text = inputText.value.trim() || 'sitelen-sitelen';
-                    const filename = text.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') + '.png';
-                    
-                    downloadLink.href = canvas.toDataURL('image/png');
-                    downloadLink.download = filename;
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                };
+                // Draw white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                img.onerror = function() {
-                    alert('Error generating image. Please try again.');
-                };
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(sitelenPonaText.textContent, 10, 10);
                 
-                img.src = url;
-            } catch (e) {
-                console.error("Error downloading Sitelen Sitelen:", e);
-                alert('Error generating download. Please try again.');
+                // Create download link
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataURL;
+                link.download = 'sitelen-pona.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
-        }
 
-        // Event listeners for symbol converter buttons
-        sitelenPonaBtn.addEventListener('click', renderSitelenPona);
-        sitelenSitelenBtn.addEventListener('click', renderSitelenSitelen);
-        downloadSitelenPona.addEventListener('click', downloadSitelenPonaImage);
-        downloadSitelenSitelen.addEventListener('click', downloadSitelenSitelenImage);
-
-        // Event listeners for symbol converter buttons - UPDATED TO ENSURE THEY WORK
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if buttons exist
-            if (sitelenPonaBtn && sitelenSitelenBtn) {
-                sitelenPonaBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    renderSitelenPona();
-                });
+            // Sitelen Sitelen functions
+            function renderSitelenSitelen() {
+                const text = inputText.value.trim();
+                if (!text) {
+                    alert('Please enter some Toki Pona text first');
+                    return;
+                }
                 
-                sitelenSitelenBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    renderSitelenSitelen();
-                });
+                // Clear previous content
+                sitelenSitelenText.innerHTML = '';
                 
-                console.log('Symbol buttons event listeners added successfully');
-            } else {
-                console.error('Symbol buttons not found in DOM');
+                try {
+                    // Use the Sitelen Sitelen renderer
+                    console.log('Attempting to parse text:', text);
+                    const structuredSentence = sitelenParser.parse(text)[0];
+                    console.log('Parsed successfully:', structuredSentence);
+                    
+                    // Render with default options
+                    sitelenRenderer.renderInteractiveSentence(structuredSentence, {
+                        shadow: true,
+                        container: sitelenSitelenText
+                    });
+                    
+                    console.log('Rendering completed');
+                    sitelenSitelenOutput.style.display = 'block';
+                    sitelenPonaOutput.style.display = 'none';
+                    
+                    // Show the container
+                    document.getElementById('symbolConverters').classList.add('active');
+                } catch (e) {
+                    console.error("Error rendering Sitelen Sitelen:", e);
+                    sitelenSitelenText.innerHTML = '<p>Error rendering Sitelen Sitelen. Please try simpler text.</p>';
+                    document.getElementById('symbolConverters').classList.add('active');
+                }
             }
+
+            function downloadSitelenSitelenImage() {
+                const svgElement = sitelenSitelenText.querySelector('svg');
+                if (!svgElement) {
+                    alert('No Sitelen Sitelen image to download');
+                    return;
+                }
+                
+                try {
+                    // Create a canvas element
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Get SVG dimensions
+                    const width = svgElement.width.baseVal.value;
+                    const height = svgElement.height.baseVal.value;
+                    
+                    // Set canvas dimensions
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Create an image from the SVG
+                    const svgData = new XMLSerializer().serializeToString(svgElement);
+                    const img = new Image();
+                    const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+                    const url = URL.createObjectURL(svgBlob);
+                    
+                    img.onload = function() {
+                        // Draw the image on canvas
+                        ctx.drawImage(img, 0, 0);
+                        URL.revokeObjectURL(url);
+                        
+                        // Create download link
+                        const downloadLink = document.createElement('a');
+                        const text = inputText.value.trim() || 'sitelen-sitelen';
+                        const filename = text.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') + '.png';
+                        
+                        downloadLink.href = canvas.toDataURL('image/png');
+                        downloadLink.download = filename;
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+                    };
+                    
+                    img.onerror = function() {
+                        alert('Error generating image. Please try again.');
+                    };
+                    
+                    img.src = url;
+                } catch (e) {
+                    console.error("Error downloading Sitelen Sitelen:", e);
+                    alert('Error generating download. Please try again.');
+                }
+            }
+
+            // Event listeners for symbol converter buttons
+            sitelenPonaBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                renderSitelenPona();
+            });
+            
+            sitelenSitelenBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                renderSitelenSitelen();
+            });
+            
+            downloadSitelenPona.addEventListener('click', downloadSitelenPonaImage);
+            downloadSitelenSitelen.addEventListener('click', downloadSitelenSitelenImage);
 
             // Check if renderer is loaded
             if (typeof sitelenRenderer !== 'undefined') {
@@ -902,9 +897,8 @@
             } else {
                 console.error('Sitelen Sitelen renderer not loaded');
             }
-        });
-
-        // Test renderer with simple text
+            
+            // Test renderer with simple text
             try {
                 const testText = "toki pona";
                 const testContainer = document.createElement('div');
