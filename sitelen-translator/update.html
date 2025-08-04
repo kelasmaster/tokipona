@@ -498,7 +498,7 @@
             "weka": ["away, absent", "tidak ada, jauh"],
             "wile": ["want, need", "ingin, butuh"],
             
-            // Common phrases (added for better translations)
+            // Common phrases
             "jan pona": ["friend", "teman"],
             "toki pona": ["good speech, Toki Pona language", "ucapan baik, bahasa Toki Pona"],
             "toki!": ["hello!", "halo!"],
@@ -839,21 +839,27 @@
 
             // Translate Toki Pona to English/Indonesian
             function translateTokiPona(text, targetLang) {
-                // First check for exact phrase matches
-                const lowerText = text.toLowerCase();
-                for (const [phrase, translations] of Object.entries(nimi)) {
-                    if (phrase.length > 3 && lowerText.includes(phrase.toLowerCase())) {
-                        // Replace the phrase with its translation
-                        const regex = new RegExp(phrase, 'gi');
-                        const translation = targetLang === 'en' ? translations[0] : translations[1] || translations[0];
-                        text = text.replace(regex, translation);
+                // First make a copy of the original text for comparison
+                let originalText = text.toLowerCase();
+                let result = text;
+                
+                // Create a list of phrases sorted by length (longest first)
+                const phrases = Object.keys(nimi).filter(phrase => phrase.includes(' '));
+                phrases.sort((a, b) => b.length - a.length);
+                
+                // Replace phrases first (longest to shortest)
+                for (const phrase of phrases) {
+                    const regex = new RegExp('\\b' + phrase + '\\b', 'gi');
+                    if (regex.test(result)) {
+                        const translation = targetLang === 'en' ? nimi[phrase][0] : nimi[phrase][1];
+                        result = result.replace(regex, translation);
                     }
                 }
                 
                 // Then handle individual words
-                const words = text.split(/(\s+|\W+)/);
+                const words = result.split(/(\s+|\W+)/);
                 
-                return words.map(word => {
+                result = words.map(word => {
                     // Skip whitespace and punctuation
                     if (!word.trim() || /^\W+$/.test(word)) {
                         return word;
@@ -861,10 +867,9 @@
                     
                     const lowerWord = word.toLowerCase();
                     
-                    // Check if word is in dictionary
-                    if (nimi.hasOwnProperty(lowerWord)) {
+                    // Check if word is in dictionary (and wasn't already translated as part of a phrase)
+                    if (nimi.hasOwnProperty(lowerWord) && originalText.includes(word.toLowerCase())) {
                         const translations = nimi[lowerWord];
-                        // Return translation based on target language
                         return targetLang === 'en' ? translations[0] : translations[1] || translations[0];
                     }
                     
@@ -878,6 +883,8 @@
                     
                     return specialCases[lowerWord] || word;
                 }).join('');
+                
+                return result;
             }
 
             // Translate English/Indonesian to Toki Pona (simplified)
@@ -885,7 +892,8 @@
                 // First check for exact phrase matches
                 const lowerText = text.toLowerCase();
                 for (const [phrase, translations] of Object.entries(nimi)) {
-                    if (translations[sourceLang === 'en' ? 0 : 1].toLowerCase().includes(lowerText)) {
+                    const translation = translations[sourceLang === 'en' ? 0 : 1];
+                    if (translation.toLowerCase().includes(lowerText)) {
                         return phrase;
                     }
                 }
