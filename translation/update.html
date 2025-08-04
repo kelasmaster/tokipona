@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toki Pona Translator with Grammar Check</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* [Previous CSS remains exactly the same] */
+    </style>
+</head>
+<body>
+    <!-- [Previous HTML structure remains exactly the same] -->
+
+    <script>
+        // Current year for footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Comprehensive Toki Pona dictionary with phrases
+        const nimi = {
+            // Official words
+            "a": ["(emphasis, emotion)", "(penekanan, emosi)"],
+            "ala": ["no, not, none", "tidak, bukan"],
+            "ale": ["all, everything", "semua, segala"],
+            "anpa": ["low, down, defeat", "rendah, bawah, kalah"],
+            "ante": ["different, change", "berbeda, ubah"],
+            "anu": ["or", "atau"],
+            "awen": ["stay, remain, keep", "tetap, tinggal, jaga"],
+            "e": ["(direct object marker)", "(penanda objek langsung)"],
+            "en": ["and (between subjects)", "dan (antara subjek)"],
+            "esun": ["trade, market", "perdagangan, pasar"],
+            "ijo": ["thing, object", "benda, objek"],
+            "ike": ["bad, evil", "buruk, jahat"],
+            "ilo": ["tool, machine", "alat, mesin"],
+            "insa": ["inside, internal", "dalam, internal"],
+            "jaki": ["dirty, gross", "kotor, menjijikkan"],
+            "jan": ["person, people", "orang, manusia"],
+            "jelo": ["yellow", "kuning"],
+            "jo": ["have, hold", "punya, pegang"],
+            "kala": ["fish, sea creature", "ikan, makhluk laut"],
+            "kalama": ["sound, noise", "suara, bunyi"],
+            "kama": ["come, become", "datang, menjadi"],
+            "kasi": ["plant, leaf", "tanaman, daun"],
+            "ken": ["can, may, possible", "bisa, mungkin"],
+            "kepeken": ["use, with (instrumental)", "gunakan, dengan"],
+            "kili": ["fruit, vegetable", "buah, sayur"],
+            "kin": ["also, indeed", "juga, memang"],
+            "kiwen": ["hard, rock, metal", "keras, batu, logam"],
+            "ko": ["semi-solid, paste", "semi-padat, pasta"],
+            "kon": ["air, spirit, essence", "udara, roh, esensi"],
+            "kule": ["color", "warna"],
+            "kulupu": ["group, community", "kelompok, komunitas"],
+            "kute": ["hear, listen", "dengar, dengarkan"],
+            "la": ["(context marker)", "(penanda konteks)"],
+            "lape": ["sleep, rest", "tidur, istirahat"],
+            "laso": ["blue, green", "biru, hijau"],
+            "lawa": ["head, lead, control", "kepala, pimpin, kendali"],
+            "len": ["cloth, clothing", "kain, pakaian"],
+            "lete": ["cold", "dingin"],
+            "li": ["(verb marker)", "(penanda kata kerja)"],
+            "lili": ["small, little", "kecil, sedikit"],
+            "linja": ["long, thin, string", "panjang, tipis, tali"],
+            "lipu": ["flat object, document", "benda datar, dokumen"],
+            "loje": ["red", "merah"],
+            "lon": ["be at, exist", "berada, ada"],
+            "luka": ["hand, arm", "tangan, lengan"],
+            "lukin": ["see, look", "lihat, amati"],
+            "lupa": ["hole, door", "lubang, pintu"],
+            "ma": ["land, earth", "tanah, bumi"],
+            "mama": ["parent, ancestor", "orang tua, leluhur"],
+            "mani": ["money, wealth", "uang, kekayaan"],
+            "meli": ["woman, female", "wanita, perempuan"],
+            "mi": ["I, me, we, us", "aku, saya, kami"],
+            "mije": ["man, male", "pria, laki-laki"],
+            "moku": ["eat, food", "makan, makanan"],
+            "moli": ["die, dead", "mati, meninggal"],
+            "monsi": ["back, rear", "belakang, punggung"],
+            "mu": ["(animal sound)", "(suara binatang)"],
+            "mun": ["moon", "bulan"],
+            "musi": ["fun, play, game", "menyenangkan, main, permainan"],
+            "mute": ["many, much, very", "banyak, sangat"],
+            "nanpa": ["number", "angka"],
+            "nasa": ["crazy, silly", "gila, konyol"],
+            "nasin": ["way, method, path", "cara, metode, jalan"],
+            "nena": ["bump, hill, button", "benjolan, bukit, tombol"],
+            "ni": ["this, that", "ini, itu"],
+            "nimi": ["name, word", "nama, kata"],
+            "noka": ["foot, leg", "kaki, tungkai"],
+            "o": ["(command marker)", "(penanda perintah)"],
+            "olin": ["love", "cinta"],
+            "ona": ["he, she, it, they", "dia, mereka"],
+            "open": ["open, begin", "buka, mulai"],
+            "pakala": ["break, accident", "rusak, kecelakaan"],
+            "pali": ["do, make, work", "lakukan, buat, kerja"],
+            "palisa": ["long hard thing, stick", "benda panjang keras, tongkat"],
+            "pan": ["grain, bread", "biji-bijian, roti"],
+            "pana": ["give, send", "beri, kirim"],
+            "pi": ["(possession marker)", "(penanda kepemilikan)"],
+            "pilin": ["feel, emotion", "rasa, emosi"],
+            "pimeja": ["black, dark", "hitam, gelap"],
+            "pini": ["end, finish", "akhir, selesai"],
+            "pipi": ["insect, bug", "serangga, kutu"],
+            "poka": ["side, hip, with", "sisi, pinggul, dengan"],
+            "poki": ["container, box", "wadah, kotak"],
+            "pona": ["good, simple", "baik, sederhana"],
+            "pu": ["(book, interact with official Toki Pona)", "(buku, berinteraksi dengan Toki Pona resmi)"],
+            "sama": ["same, similar", "sama, serupa"],
+            "seli": ["hot, heat", "panas"],
+            "selo": ["outer form, shell", "bentuk luar, kulit"],
+            "seme": ["what, which", "apa, yang mana"],
+            "sewi": ["high, up, sacred", "tinggi, atas, suci"],
+            "sijelo": ["body, physical state", "tubuh, keadaan fisik"],
+            "sike": ["circle, round, cycle", "lingkaran, bulat, siklus"],
+            "sin": ["new, fresh", "baru, segar"],
+            "sina": ["you", "kamu, anda"],
+            "sinpin": ["front, face, wall", "depan, wajah, dinding"],
+            "sitelen": ["picture, write", "gambar, tulis"],
+            "sona": ["know, knowledge", "tahu, pengetahuan"],
+            "soweli": ["animal, land mammal", "hewan, mamalia darat"],
+            "suli": ["big, important", "besar, penting"],
+            "suno": ["sun, light", "matahari, cahaya"],
+            "supa": ["horizontal surface", "permukaan horizontal"],
+            "suwi": ["sweet, cute", "manis, lucu"],
+            "tan": ["from, because", "dari, karena"],
+            "taso": ["but, only", "tapi, hanya"],
+            "tawa": ["go, to, move", "pergi, ke, bergerak"],
+            "telo": ["water, liquid", "air, cairan"],
+            "tenpo": ["time, period", "waktu, periode"],
+            "toki": ["speak, language", "bicara, bahasa"],
+            "tomo": ["house, building", "rumah, bangunan"],
+            "tu": ["two", "dua"],
+            "unpa": ["sex, sexual", "seks, seksual"],
+            "uta": ["mouth", "mulut"],
+            "utala": ["fight, battle", "lawan, pertempuran"],
+            "walo": ["white", "putih"],
+            "wan": ["one, unite", "satu, menyatukan"],
+            "waso": ["bird, flying creature", "burung, makhluk terbang"],
+            "wawa": ["strong, power", "kuat, kekuatan"],
+            "weka": ["away, absent", "jauh, tidak hadir"],
+            "wile": ["want, need, must", "ingin, perlu, harus"],
+            
+            // Common phrases
+            "jan pona": ["friend", "teman"],
+            "toki pona": ["good speech, Toki Pona language", "ucapan baik, bahasa Toki Pona"],
+            "toki!": ["hello!", "halo!"],
+            "sina pona": ["you are good", "kamu baik"],
+            "mi olin e sina": ["I love you", "aku mencintaimu"],
+            "kama pona!": ["welcome!", "selamat datang!"],
+            "tawa pona": ["goodbye", "selamat jalan"],
+            "lape pona!": ["good night!", "selamat tidur!"],
+            "moku pona!": ["bon appétit!", "selamat makan!"],
+            "ale li pona": ["all is good", "semuanya baik"],
+            "mi tawa": ["I'm going", "saya pergi"],
+            "sina wile ala wile moku?": ["do you want to eat?", "apakah kamu ingin makan?"],
+            "mi wile e ni": ["I want this", "saya ingin ini"],
+            "tenpo suno pona": ["good day", "selamat siang"],
+            "mi sona ala": ["I don't know", "saya tidak tahu"],
+            "ni li pona": ["this is good", "ini bagus"],
+            "mi lukin e sina": ["I see you", "saya melihatmu"],
+            "sina lon seme?": ["where are you?", "kamu di mana?"],
+            "mi lon ma tomo": ["I'm in the city", "saya di kota"]
+        };
+
+        // [Rest of the Toki Pona grammar rules and word lists remain the same]
+
+        // [Random Toki Pona generator script remains the same]
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // [Previous DOM element declarations remain the same]
+
+            // Improved translation functions
+            function translateTokiPona(text, targetLang) {
+                // First make a copy of the original text for comparison
+                let originalText = text.toLowerCase();
+                let result = text;
+                
+                // Create a list of phrases sorted by length (longest first)
+                const phrases = Object.keys(nimi).filter(phrase => phrase.includes(' '));
+                phrases.sort((a, b) => b.length - a.length);
+                
+                // Replace phrases first (longest to shortest)
+                for (const phrase of phrases) {
+                    const regex = new RegExp('\\b' + phrase + '\\b', 'gi');
+                    if (regex.test(result)) {
+                        const translation = targetLang === 'en' ? nimi[phrase][0] : nimi[phrase][1];
+                        result = result.replace(regex, translation);
+                    }
+                }
+                
+                // Then handle individual words
+                const words = result.split(/(\s+|\W+)/);
+                
+                result = words.map(word => {
+                    // Skip whitespace and punctuation
+                    if (!word.trim() || /^\W+$/.test(word)) {
+                        return word;
+                    }
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Check if word is in dictionary (and wasn't already translated as part of a phrase)
+                    if (nimi.hasOwnProperty(lowerWord) && originalText.includes(word.toLowerCase())) {
+                        const translations = nimi[lowerWord];
+                        return targetLang === 'en' ? translations[0] : translations[1] || translations[0];
+                    }
+                    
+                    // Special cases for common particles
+                    const specialCases = {
+                        'li': targetLang === 'en' ? 'is' : 'adalah',
+                        'la': targetLang === 'en' ? "it's said" : "dikatakan",
+                        'e': targetLang === 'en' ? 'such' : 'seperti',
+                        'o': targetLang === 'en' ? '(command)' : '(perintah)',
+                        'anu': targetLang === 'en' ? 'or' : 'atau',
+                        'en': targetLang === 'en' ? 'and' : 'dan',
+                        'pi': targetLang === 'en' ? 'of' : 'dari'
+                    };
+                    
+                    return specialCases[lowerWord] || word;
+                }).join('');
+                
+                return result;
+            }
+
+            function translateToTokiPona(text, sourceLang) {
+                // First check for exact phrase matches
+                const lowerText = text.toLowerCase();
+                for (const [phrase, translations] of Object.entries(nimi)) {
+                    const translation = translations[sourceLang === 'en' ? 0 : 1];
+                    if (translation && translation.toLowerCase().includes(lowerText)) {
+                        return phrase;
+                    }
+                }
+                
+                // Then handle individual words
+                const words = text.split(/(\s+|\W+)/);
+                
+                // Find Toki Pona words that match the English/Indonesian meaning
+                return words.map(word => {
+                    if (!word.trim() || /^\W+$/.test(word)) {
+                        return word;
+                    }
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Search the dictionary for matches
+                    for (const [tokiWord, translations] of Object.entries(nimi)) {
+                        if (sourceLang === 'en' && translations[0] && translations[0].toLowerCase().includes(lowerWord)) {
+                            return tokiWord;
+                        }
+                        if (sourceLang === 'id' && translations[1] && translations[1].toLowerCase().includes(lowerWord)) {
+                            return tokiWord;
+                        }
+                    }
+                    
+                    return word;
+                }).join('');
+            }
+
+            // Handle translation with improved logic
+            function translateText() {
+                const text = inputText.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some text to translate');
+                    return;
+                }
+                
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                
+                // Simulate processing delay (remove in production)
+                setTimeout(() => {
+                    let translation;
+                    
+                    if (currentInputLanguage === 'toki') {
+                        // Translate from Toki Pona to English/Indonesian/Toki Pona
+                        if (currentOutputLanguage === 'toki') {
+                            translation = text; // No translation needed
+                        } else {
+                            translation = translateTokiPona(text, currentOutputLanguage);
+                        }
+                    } else {
+                        // Translate from English/Indonesian to Toki Pona
+                        translation = translateToTokiPona(text, currentInputLanguage);
+                        
+                        // If output language is not Toki Pona (translate to English/Indonesian)
+                        if (currentOutputLanguage !== 'toki') {
+                            translation = translateTokiPona(translation, currentOutputLanguage);
+                        }
+                    }
+                    
+                    outputText.value = translation;
+                    loadingIndicator.style.display = 'none';
+                }, 500);
+            }
+
+            // [Rest of the JavaScript remains the same]
+        });
+    </script>
+</body>
+</html>
