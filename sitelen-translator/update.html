@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toki Pona Translator</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --light-color: #fff;
+            --shadow: 0 2px 5px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .translator-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 768px) {
+            .translator-container {
+                flex-direction: row;
+            }
+        }
+
+        .input-section, .output-section {
+            flex: 1;
+            background-color: var(--light-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        button.secondary {
+            background-color: #6c757d;
+        }
+
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .language-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .language-toggle button {
+            flex: 1;
+        }
+
+        .language-toggle button.active {
+            background-color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .suggestions {
+            position: absolute;
+            width: calc(100% - 40px);
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            background-color: #f1f1f1;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .input-language {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .output-language {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .output-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .symbol-converters {
+            display: none;
+            background-color: var(--light-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+        
+        .symbol-converters.active {
+            display: block;
+        }
+        
+        .symbol-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .symbol-output {
+            margin-top: 20px;
+        }
+        
+        .symbol-output h3 {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .symbol-canvas {
+            width: 100%;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+        
+        @font-face {
+            font-family: 'linja-pona';
+            src: url('https://cdn.jsdelivr.net/gh/janSame/linja-pona@latest/linja-pona-4.1.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        .linja-pona {
+            font-family: 'linja-pona', sans-serif;
+            font-size: 2rem;
+            line-height: 1.5;
+            padding: 20px;
+        }
+        .instructions {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+         .output-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .output-actions button, 
+        .output-actions a {
+            flex: 1 1 auto;
+            min-width: 0;
+            text-align: center;
+        }
+        
+        .output-actions a {
+            text-decoration: none;
+        }
+        
+        /* Mobile specific styles */
+        @media (max-width: 480px) {
+            .output-actions button, 
+            .output-actions a {
+                flex: 1 1 100%;
+            }
+            
+            .output-actions {
+                flex-direction: column;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Toki Pona Translator</h1>
+            <p class="subtitle">Translate between Toki Pona, English, and Indonesian</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="translator-container">
+            <section class="input-section">
+                <h2>Input Text</h2>
+                <div class="input-language">Input Language: <span id="inputLangDisplay">Toki Pona</span></div>
+                <textarea id="inputText" placeholder="Enter text here..."></textarea>
+                <div class="suggestions" id="suggestions"></div>
+                <div class="button-group">
+                    <button id="setInputToki" class="active">TP</button>
+                    <button id="setInputEnglish">EN</button>
+                    <button id="setInputIndonesian">ID</button>
+                </div>
+                <button id="translateBtn">Translate</button>
+                <div class="button-group" id="symbolButtons" style="display: none;">
+                    <button id="sitelenPonaBtn">Sitelen Pona Symbol</button>
+                </div>
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Translating...</p>
+                </div>
+            </section>
+
+            <section class="output-section">
+                <h2>Translation</h2>
+                <div class="output-language">Output Language: <span id="outputLangDisplay">English</span></div>
+                <textarea id="outputText" placeholder="Translation will appear here..." readonly></textarea>
+                <div class="language-toggle">
+                    <button id="outputEnglish" class="active">EN</button>
+                    <button id="outputIndonesian">ID</button>
+                    <button id="outputTokiPona">TP</button>
+                </div>
+            </section>
+        </div>
+
+        <section class="symbol-converters" id="symbolConverters">
+            <div id="sitelenPonaOutput" class="symbol-output">
+                <h3>Sitelen Pona Output</h3>
+                <div class="symbol-canvas linja-pona" id="sitelenPonaText"></div>
+                <div class="output-actions">
+                    <button id="downloadSitelenPona">Download as Image</button>
+                  <a href="https://tokiponasitelen.blogspot.com" target="_blank" class="sitelen-sitelen-btn">
+                        <button style="width: 100%;">Sitelen Sitelen Converter</button>
+                    </a>
+                </div>
+                <div class="instructions">
+                    Type Toki Pona text in Latin alphabet in the input box.<br>
+                    Type text in small text.<br>
+                    Use hyphens to make compound words.<br>
+                    Use square brackets and underscores to create cartouches.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© <span id="currentYear"></span> - Toki Pona Translator</p>
+        </div>
+    </footer>
+
+    <script>
+        // Current year for footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Enhanced Toki Pona dictionary with phrases
+        const nimi = {
+            // Single words
+            "a": ["ah! ha! uh!", "ah! ha! uh! oh! (ekspresi emosional)"],
+            "akesi": ["non-cute animal (reptile, amphibian)", "hewan bukan lucu (reptil, amfibi)"],
+            "ala": ["no, not, none, un-", "tidak, bukan, tidak ada"],
+            "ale": ["all, every, complete, abundance", "semua, seluruh, lengkap, banyak"],
+            "ali": ["all, every, complete, abundance", "semua, seluruh, lengkap, banyak"],
+            "alasa": ["hunt, forage", "berburu, mencari"],
+            "anpa": ["bowing, low, beneath, defeated", "merunduk, di bawah, kalah"],
+            "ante": ["different, changed, other", "berbeda, berubah, lain"],
+            "anu": ["or (used in questions)", "atau (untuk pertanyaan)"],
+            "awen": ["enduring, kept, safe, staying", "bertahan, tetap, aman"],
+            "e": ["(object marker before direct object)", "(penanda objek)"],
+            "en": ["and (used between nouns)", "dan (antar kata benda)"],
+            "esun": ["market, shop, trade", "pasar, toko, berdagang"],
+            "ijo": ["thing, object, matter", "benda, hal"],
+            "ike": ["bad, negative, wrong, evil", "buruk, jahat"],
+            "ilo": ["tool, device, machine", "alat, mesin"],
+            "insa": ["inside, contents, center", "dalam, isi"],
+            "jaki": ["dirty, gross, toxic", "kotor, menjijikkan"],
+            "jan": ["person, human, somebody", "orang, manusia"],
+            "jelo": ["yellow", "kuning"],
+            "jo": ["have, contain", "memiliki, berisi"],
+            "kala": ["fish, sea creature", "ikan, hewan laut"],
+            "kalama": ["sound, noise", "suara, bunyi"],
+            "kama": ["to come, become, event", "datang, menjadi"],
+            "kasi": ["plant, vegetation", "tanaman"],
+            "ken": ["can, may, possibility", "bisa, mungkin"],
+            "kepeken": ["with, by means of", "dengan, memakai"],
+            "kili": ["fruit, vegetable", "buah, sayuran"],
+            "kin": ["also, too, indeed", "juga, bahkan"],
+            "kipisi": ["to cut", "memotong"],
+            "kiwen": ["hard object, rock, metal", "keras, batu, logam"],
+            "ko": ["semi-solid, paste, powder", "lumpur, pasta, bubuk"],
+            "kon": ["air, breath, spirit", "udara, napas, roh"],
+            "kule": ["color, paint", "warna, cat"],
+            "kulupu": ["group, community", "kelompok, komunitas"],
+            "kute": ["hear, listen", "mendengar"],
+            "la": ["(context marker)", "(penanda konteks)"],
+            "lape": ["sleep, rest", "tidur, istirahat"],
+            "laso": ["blue, green", "biru, hijau"],
+            "lawa": ["head, lead", "kepala, memimpin"],
+            "len": ["clothing, fabric", "pakaian, kain"],
+            "lete": ["cold, uncooked", "dingin, mentah"],
+            "li": ["(verb marker)", "(penanda kata kerja)"],
+            "lili": ["small, little", "kecil"],
+            "linja": ["line, rope", "garis, tali"],
+            "lipu": ["paper, book", "kertas, buku"],
+            "loje": ["red", "merah"],
+            "lon": ["true, present", "benar, ada"],
+            "luka": ["hand, five", "tangan, lima"],
+            "lukin": ["see, look", "melihat"],
+            "lupa": ["hole, opening", "lubang, pintu"],
+            "ma": ["land, country", "tanah, negara"],
+            "mama": ["parent, ancestor", "orangtua, leluhur"],
+            "mani": ["money, value", "uang, nilai"],
+            "meli": ["woman", "perempuan"],
+            "mi": ["I, me", "saya, aku"],
+            "mije": ["man", "laki-laki"],
+            "moku": ["eat, food", "makan, makanan"],
+            "moli": ["die, death", "mati"],
+            "monsi": ["back", "belakang"],
+            "mu": ["(animal sound)", "(suara binatang)"],
+            "mun": ["moon, star", "bulan, bintang"],
+            "musi": ["fun, play", "bersenang-senang, bermain"],
+            "mute": ["many, much", "banyak"],
+            "nasa": ["crazy, weird", "gila, aneh"],
+            "nasin": ["way, path", "jalan, cara"],
+            "nena": ["bump, nose", "benjolan, hidung"],
+            "ni": ["this, that", "ini, itu"],
+            "nimi": ["name, word", "nama, kata"],
+            "noka": ["foot, leg", "kaki"],
+            "o": ["hey!", "hai!"],
+            "oko": ["eye", "mata"],
+            "olin": ["love", "cinta"],
+            "ona": ["he, she, they", "dia, mereka"],
+            "open": ["open, begin", "buka, mulai"],
+            "pakala": ["break, damage", "rusak, celaka"],
+            "pali": ["do, make", "melakukan, membuat"],
+            "palisa": ["long stick", "tongkat, batang"],
+            "pan": ["bread, grain", "roti, gandum"],
+            "pana": ["give, release", "memberi, melepaskan"],
+            "pi": ["of (modifier)", "dari (pengelompokan)"],
+            "pilin": ["feel, emotion", "perasaan, hati"],
+            "pimeja": ["black", "hitam"],
+            "pini": ["end, finish", "akhir, selesai"],
+            "pipi": ["insect", "serangga"],
+            "poka": ["side, with", "sisi, dengan"],
+            "poki": ["container", "wadah, kotak"],
+            "pona": ["good, simple", "baik, sederhana"],
+            "sama": ["same, sibling", "sama, saudara"],
+            "seli": ["fire, heat", "api, panas"],
+            "selo": ["outside, skin", "luar, kulit"],
+            "seme": ["what?", "apa?"],
+            "sewi": ["sacred, high", "tinggi, suci"],
+            "sijelo": ["body", "tubuh"],
+            "sike": ["circle, cycle", "lingkaran, siklus"],
+            "sin": ["new, another", "baru, lain"],
+            "sina": ["you", "kamu"],
+            "sinpin": ["front, face", "depan, wajah"],
+            "sitelen": ["image, write", "gambar, menulis"],
+            "sona": ["know, understand", "tahu, mengerti"],
+            "soweli": ["animal (land)", "hewan darat"],
+            "suli": ["big, important", "besar, penting"],
+            "suno": ["sun, light", "matahari, cahaya"],
+            "supa": ["surface, table", "permukaan, meja"],
+            "suwi": ["sweet, cute", "manis, lucu"],
+            "tan": ["from, because", "dari, karena"],
+            "taso": ["but, only", "tapi, hanya"],
+            "tawa": ["go, move", "pergi, bergerak"],
+            "telo": ["water, liquid", "air, cairan"],
+            "tenpo": ["time", "waktu"],
+            "toki": ["speak, language", "bicara, bahasa"],
+            "tomo": ["house, building", "rumah, bangunan"],
+            "tu": ["two", "dua"],
+            "unpa": ["sex", "seks"],
+            "uta": ["mouth", "mulut"],
+            "utala": ["fight", "bertarung"],
+            "walo": ["white", "putih"],
+            "wan": ["one", "satu"],
+            "waso": ["bird", "burung"],
+            "wawa": ["power", "kuat, tenaga"],
+            "weka": ["away, absent", "tidak ada, jauh"],
+            "wile": ["want, need", "ingin, butuh"],
+            
+            // Common phrases (added for better translations)
+            "jan pona": ["friend", "teman"],
+            "toki pona": ["good speech, Toki Pona language", "ucapan baik, bahasa Toki Pona"],
+            "toki!": ["hello!", "halo!"],
+            "sina pona": ["you are good", "kamu baik"],
+            "mi olin e sina": ["I love you", "aku mencintaimu"],
+            "kama pona!": ["welcome!", "selamat datang!"],
+            "tawa pona": ["goodbye", "selamat jalan"],
+            "lape pona!": ["good night!", "selamat tidur!"],
+            "moku pona!": ["bon appétit!", "selamat makan!"],
+            "ale li pona": ["all is good", "semuanya baik"],
+            "mi wile e ni": ["I want this", "aku ingin ini"],
+            "seme li sin?": ["what's new?", "apa yang baru?"],
+            "nimi sina li seme?": ["what is your name?", "namamu siapa?"],
+            "nimi mi li ...": ["my name is ...", "namaku adalah ..."],
+            "sina pilin seme?": ["how are you?", "bagaimana perasaanmu?"],
+            "mi pilin pona": ["I feel good", "aku merasa baik"],
+            "mi pilin ike": ["I feel bad", "aku merasa buruk"],
+            "tenpo suno pini": ["yesterday", "kemarin"],
+            "tenpo suno ni": ["today", "hari ini"],
+            "tenpo suno kama": ["tomorrow", "besok"],
+            "tenpo pimeja": ["night", "malam"],
+            "tenpo suno": ["day", "siang, hari"],
+            "tenpo sike": ["year", "tahun"],
+            "tenpo mun": ["month", "bulan"],
+            "tenpo suno luka tu": ["week", "pekan, minggu"],
+            "jan lili": ["child", "anak"],
+            "jan suli": ["adult", "orang dewasa"],
+            "jan sama": ["colleague", "rekan sejawat"],
+            "jan kulupu": ["group member", "anggota kelompok"],
+            "jan sewi": ["God, deity", "Tuhan"],
+            "jan sona": ["expert", "ahli"],
+            "jan utala": ["soldier", "tentara"],
+            "jan pi pana sona": ["teacher", "guru"],
+            "jan pi pona sijelo": ["doctor", "dokter"],
+            "jan pi pali moku": ["cook", "koki"],
+            "meli olin": ["wife", "istri"],
+            "mije olin": ["husband", "suami"],
+            "meli sama": ["sister", "saudari"],
+            "mije sama": ["brother", "saudara"],
+            "meli lili": ["daughter", "putri"],
+            "mije lili": ["son", "putra"],
+            "kulupu mama": ["family", "keluarga"],
+            "tomo tawa": ["car", "mobil"],
+            "tomo moku": ["restaurant", "restoran"],
+            "tomo sona": ["school", "sekolah"],
+            "tomo pali": ["office", "kantor"],
+            "tomo telo": ["bathroom", "kamar mandi"],
+            "tomo lape": ["bedroom", "kamar tidur"],
+            "tomo pi jan pona": ["friend's house", "rumah teman"],
+            "ilo toki": ["phone", "telepon"],
+            "ilo sona": ["computer", "komputer"],
+            "ilo pi sitelen tawa": ["television", "televisi"],
+            "ilo musi": ["toy", "mainan"],
+            "supa lape": ["bed", "tempat tidur"],
+            "supa moku": ["dining table", "meja makan"],
+            "supa pali": ["desk", "meja kerja"],
+            "supa monsi": ["chair, sofa", "kursi, sofa"],
+            "supa lawa": ["pillow", "bantal"],
+            "poki lete": ["refrigerator", "kulkas"],
+            "poki seli": ["oven", "oven"],
+            "poki telo": ["sink, bathtub", "wastafel, bak mandi"],
+            "telo nasa": ["alcohol", "alkohol"],
+            "telo seli wawa": ["coffee", "kopi"],
+            "telo kili": ["juice", "jus"],
+            "telo suli": ["ocean", "laut"],
+            "telo kiwen": ["ice", "es"],
+            "telo jelo": ["urine", "urin"],
+            "moku telo": ["soup", "sup"],
+            "moku suwi": ["candy, chocolate", "permen, cokelat"],
+            "moku lili": ["snack", "makanan ringan"],
+            "kala lete": ["raw fish", "ikan mentah"],
+            "kili suwi": ["sweet fruit, vegetable", "buah, sayur manis"],
+            "kili lili kiwen": ["nuts", "kacang"],
+            "kili palisa": ["long fruit, vegetable", "buah, sayur panjang"],
+            "kili loje": ["red fruit, vegetable", "buah, sayur merah"],
+            "kili ma": ["root vegetable", "buah, sayur tanah"],
+            "sike mama waso": ["egg", "telur"],
+            "pan suwi": ["cake", "kue"],
+            "len lawa": ["hat, headband", "topi, pita"],
+            "linja lawa": ["hair", "rambut kepala"],
+            "linja lili oko": ["eyebrow", "alis"],
+            "linja sinpin": ["facial hair", "rambut wajah, janggut"],
+            "linja uta": ["mustache", "kumis"],
+            "nena lawa": ["nose", "hidung"],
+            "nena mama": ["breast", "payudara"],
+            "nena lili pi nena mama": ["nipple", "puting"],
+            "nena lili unpa meli": ["clitoris", "klitoris"],
+            "palisa mije": ["penis", "penis"],
+            "sike mije tu": ["testicles", "buah zakar"],
+            "lupa meli": ["vagina", "vagina"],
+            "lupa monsi": ["buttocks", "pantat"],
+            "lupa jaki": ["anus", "anus"],
+            "lupa pi telo jelo": ["urethra", "uretra"],
+            "selo lon pini palisa kulup": ["foreskin", "kulup"],
+            "sewi pi sinpin lawa": ["forehead", "dahi"],
+            "sinpin lawa": ["face", "wajah"],
+            "palisa luka": ["finger", "jari tangan"],
+            "walo uta": ["teeth", "gigi"],
+            "sijelo pona": ["healthy body", "tubuh sehat"],
+            "pilin pona": ["good feeling, happy", "perasaan baik, senang"],
+            "pilin ike": ["bad feeling, sad", "perasaan buruk, sedih"],
+            "pilin nasa": ["strange feeling, crazy", "perasaan aneh, gila"],
+            "pilin wawa": ["energetic", "energik"],
+            "pilin ala": ["neutral feeling", "biasa saja"],
+            "pilin e moli jan": ["grieve", "berduka"],
+            "pilin e weka jan": ["miss someone", "merindukan"],
+            "pilin e ike jan": ["feel pity", "kasihan"],
+            "pona e pilin jan": ["encourage", "menyemangati"],
+            "kama olin": ["fall in love", "jatuh cinta"],
+            "wile lape": ["sleepy", "mengantuk"],
+            "wile moku": ["hungry", "lapar"],
+            "wile moku e telo": ["thirsty", "haus"],
+            "wile unpa": ["horny", "bernafsu"],
+            "wile pali e ijo": ["bored", "bosan"],
+            "wile moli": ["want to die", "ingin mati"],
+            "wile pona": ["good intention", "berniat baik"],
+            "wile ike": ["bad intention", "berniat buruk"],
+            "wile mute": ["crave", "mengidamkan"],
+            "wile mute ike": ["greedy", "tamak"],
+            "jo e mani mute": ["rich", "kaya"],
+            "jo e pilin pona": ["mentally healthy", "sehat mental"],
+            "jo e sijelo pona": ["physically healthy", "sehat fisik"],
+            "jo e linja mute": ["have thick hair", "berambut tebal"],
+            "pona lukin": ["handsome, beautiful", "tampan, cantik"],
+            "pona lukin mute": ["very good-looking", "sangat tampan, cantik"],
+            "pona moku": ["delicious", "lezat"],
+            "pona tawa sina": ["good for you", "baik untukmu"],
+            "ike lukin": ["ugly", "buruk rupa"],
+            "nasa lukin": ["look strange, funny", "terlihat aneh, lucu"],
+            "suwi lukin": ["cute", "imut"],
+            "unpa lukin": ["sexy", "seksi"],
+            "jan nasa": ["strange, foolish, crazy person", "orang aneh, bodoh, gila"],
+            "jan ike": ["bad person, enemy", "orang jahat/musuh"],
+            "jan ala": ["no one", "tidak seorang pun"],
+            "jan ante": ["other person", "orang lain"],
+            "jan pi ma ante": ["foreigner", "warga negara asing"],
+            "jan pi ma sama": ["fellow citizen", "warga negara sama"],
+            "jan pi olin e meli": ["person who likes women", "orang yang menyukai perempuan"],
+            "jan pi olin e mije": ["person who likes men", "orang yang menyukai laki-laki"],
+            "jan pi pali unpa": ["sex worker", "pekerja seks"],
+            "jan pi pona pilin": ["psychiatrist", "psikiater"],
+            "jan pi tomo pali": ["office worker", "pegawai kantor"],
+            "jan pi tomo sama": ["roommate, housemate", "teman sekamar, serumah"],
+            "jan unpa": ["sexual partner", "pasangan seksual"],
+            "jan Ken": ["Ken (person)", "Ken (orang)"],
+            "pali ala": ["unemployed", "tidak bekerja"],
+            "pali e ike": ["do bad", "berbuat buruk"],
+            "pali e pona": ["do good", "berbuat baik"],
+            "kepeken utala": ["use violence", "menggunakan kekerasan"],
+            "kepeken ike e ilo nasa": ["drug abuse", "menyalahgunakan narkotika"],
+            "kepeken lili e ilo nasa": ["use small dose", "menggunakan dosis kecil"],
+            "lukin jo e pali": ["look for work", "mencari pekerjaan"],
+            "lawa e pilin": ["control feelings", "mengendalikan perasaan"],
+            "pana e kon pona": ["laugh", "tertawa"],
+            "pana e moku tawa": ["feed", "memberi makan"],
+            "pana e pilin pona": ["give happiness", "memberikan kebahagiaan"],
+            "pana e sona": ["teach", "mengajar"],
+            "weka e ike jan": ["forgive", "memaafkan"],
+            "toki utala": ["argue", "berdebat"],
+            "toki ike": ["say bad things", "berkata buruk"],
+            "toki pona": ["say good things", "berkata baik"],
+            "toki tawa sina": ["peace be with you", "damai bersamamu"],
+            "moku ala": ["don't eat", "tidak makan"],
+            "ona li pona tawa mi": ["I like him, her", "aku menyukainya"],
+            "ona li ike tawa mi": ["I don't like him, her", "aku tidak menyukainya"],
+            "ale li pona": ["all is good", "semuanya baik"],
+            "tenpo ale": ["always", "selalu"],
+            "tenpo ala": ["never", "tidak pernah"],
+            "tenpo kama": ["future", "masa depan"],
+            "tenpo pini": ["past", "masa lalu"],
+            "tenpo lili": ["moment", "sebentar"],
+            "tenpo moku": ["meal time", "waktu makan"],
+            "tenpo ni": ["now", "sekarang"],
+            "tenpo lete": ["winter", "musim dingin"],
+            "tenpo seli": ["summer", "musim panas"],
+            "tenpo telo": ["rainy season", "musim hujan"],
+            "lon tenpo pi pali ala": ["on leave", "cuti"],
+            "ma ale": ["world", "dunia"],
+            "ma tomo": ["city", "kota"],
+            "ma tomo lawa": ["capital city", "ibu kota"],
+            "ma suli": ["continent", "benua"],
+            "suno li lon": ["sunny, day", "cerah, siang"],
+            "pimeja li lon": ["dark, night", "gelap, malam"],
+            "lete li lon": ["cool, cold", "sejuk, dingin"],
+            "seli li lon": ["warm, hot", "hangat, panas"],
+            "monsi li lon": ["back is present", "punggung ada"],
+            "sewi li lon": ["high is present", "tinggi ada"],
+            "mun li pimeja": ["new moon", "bulan baru"],
+            "mun li sike": ["full moon", "bulan purnama"],
+            "telo li kama": ["rain", "hujan"],
+            "telo lili li lon kon": ["humid", "lembab"],
+            "telo kiwen lili li kama": ["hail", "hujan es"],
+            "nena suli li pana e ko seli": ["volcanic eruption", "gunung meletus"],
+            "soweli ni li kama suli": ["This animal grows big", "Hewan ini menjadi besar"],
+            "soweli ni li moku": ["This animal eats", "Hewan ini makan"],
+            "tenpo pimeja ni la mi lape lon tomo pi jan pona mi": ["Tonight I sleep at my friend's house", "Malam ini aku tidur di rumah temanku"],
+            "tenpo pimeja pini la kalama ala li lon": ["Last night, there was no sound", "Kemarin malam, tidak ada suara"],
+            "tan seme": ["why?", "mengapa?"],
+            "tan ni la mi wile tawa tomo sina": ["Because of this, I want to go to your house", "Karena ini, aku ingin pergi ke rumahmu"],
+            "seme li sin?": ["what's new?", "apa yang baru?"],
+            "a a a": ["ha ha ha", "ha ha ha"],
+            "pakala!": ["damn!", "sial!"],
+            "pona!": ["great!", "bagus!"]
+        };
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const translateBtn = document.getElementById('translateBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const suggestions = document.getElementById('suggestions');
+            const inputLangDisplay = document.getElementById('inputLangDisplay');
+            const outputLangDisplay = document.getElementById('outputLangDisplay');
+            const symbolButtons = document.getElementById('symbolButtons');
+            const sitelenPonaBtn = document.getElementById('sitelenPonaBtn');
+            const sitelenPonaText = document.getElementById('sitelenPonaText');
+            const downloadSitelenPona = document.getElementById('downloadSitelenPona');
+
+            // Input language buttons
+            const setInputToki = document.getElementById('setInputToki');
+            const setInputEnglish = document.getElementById('setInputEnglish');
+            const setInputIndonesian = document.getElementById('setInputIndonesian');
+
+            // Output language buttons
+            const outputEnglish = document.getElementById('outputEnglish');
+            const outputIndonesian = document.getElementById('outputIndonesian');
+            const outputTokiPona = document.getElementById('outputTokiPona');
+
+            // State variables
+            let currentInputLanguage = 'toki'; // 'toki', 'en', 'id'
+            let currentOutputLanguage = 'en'; // 'en', 'id', 'toki'
+
+            // Set input language
+            function setInputLanguage(lang) {
+                currentInputLanguage = lang;
+                inputLangDisplay.textContent = 
+                    lang === 'toki' ? 'Toki Pona' : 
+                    lang === 'en' ? 'English' : 'Indonesian';
+                
+                // Update button states
+                setInputToki.classList.toggle('active', lang === 'toki');
+                setInputEnglish.classList.toggle('active', lang === 'en');
+                setInputIndonesian.classList.toggle('active', lang === 'id');
+                
+                // Update placeholder text
+                inputText.placeholder = lang === 'toki' ? 'Enter Toki Pona text here...' : 
+                                       lang === 'en' ? 'Enter English text here...' : 
+                                       'Enter Indonesian text here...';
+                
+                // Show/hide symbol buttons based on input language
+                if (lang === 'toki') {
+                    symbolButtons.style.display = 'flex';
+                } else {
+                    symbolButtons.style.display = 'none';
+                    document.getElementById('symbolConverters').classList.remove('active');
+                }
+            }
+
+            // Set output language
+            function setOutputLanguage(lang) {
+                currentOutputLanguage = lang;
+                outputLangDisplay.textContent = 
+                    lang === 'en' ? 'English' : 
+                    lang === 'id' ? 'Indonesian' : 'Toki Pona';
+                
+                // Update button states
+                outputEnglish.classList.toggle('active', lang === 'en');
+                outputIndonesian.classList.toggle('active', lang === 'id');
+                outputTokiPona.classList.toggle('active', lang === 'toki');
+                
+                // If there's already a translation, update it
+                if (outputText.value) {
+                    translateText();
+                }
+            }
+
+            // Initialize languages
+            setInputLanguage('toki');
+            setOutputLanguage('en');
+
+            // Event listeners for input language buttons
+            setInputToki.addEventListener('click', () => setInputLanguage('toki'));
+            setInputEnglish.addEventListener('click', () => setInputLanguage('en'));
+            setInputIndonesian.addEventListener('click', () => setInputLanguage('id'));
+
+            // Event listeners for output language buttons
+            outputEnglish.addEventListener('click', () => setOutputLanguage('en'));
+            outputIndonesian.addEventListener('click', () => setOutputLanguage('id'));
+            outputTokiPona.addEventListener('click', () => setOutputLanguage('toki'));
+
+            // Show word suggestions based on input
+            inputText.addEventListener('input', function() {
+                const text = this.value;
+                const lastWord = text.split(/\s+/).pop().toLowerCase();
+                
+                if (lastWord.length < 2) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                // Filter dictionary for matches
+                const matches = Object.keys(nimi).filter(word => 
+                    word.toLowerCase().startsWith(lastWord))
+                    .slice(0, 10); // Limit to 10 suggestions
+                
+                if (matches.length === 0) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                // Display suggestions
+                suggestions.innerHTML = '';
+                matches.forEach(word => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.textContent = word;
+                    div.addEventListener('click', () => {
+                        const parts = text.split(/\s+/);
+                        parts[parts.length - 1] = word;
+                        this.value = parts.join(' ') + ' ';
+                        suggestions.style.display = 'none';
+                        this.focus();
+                    });
+                    suggestions.appendChild(div);
+                });
+                
+                suggestions.style.display = 'block';
+            });
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputText) {
+                    suggestions.style.display = 'none';
+                }
+            });
+
+            // Translate Toki Pona to English/Indonesian
+            function translateTokiPona(text, targetLang) {
+                // First check for exact phrase matches
+                const lowerText = text.toLowerCase();
+                for (const [phrase, translations] of Object.entries(nimi)) {
+                    if (phrase.length > 3 && lowerText.includes(phrase.toLowerCase())) {
+                        // Replace the phrase with its translation
+                        const regex = new RegExp(phrase, 'gi');
+                        const translation = targetLang === 'en' ? translations[0] : translations[1] || translations[0];
+                        text = text.replace(regex, translation);
+                    }
+                }
+                
+                // Then handle individual words
+                const words = text.split(/(\s+|\W+)/);
+                
+                return words.map(word => {
+                    // Skip whitespace and punctuation
+                    if (!word.trim() || /^\W+$/.test(word)) {
+                        return word;
+                    }
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Check if word is in dictionary
+                    if (nimi.hasOwnProperty(lowerWord)) {
+                        const translations = nimi[lowerWord];
+                        // Return translation based on target language
+                        return targetLang === 'en' ? translations[0] : translations[1] || translations[0];
+                    }
+                    
+                    // Special cases for common particles
+                    const specialCases = {
+                        'li': targetLang === 'en' ? 'is' : 'adalah',
+                        'la': targetLang === 'en' ? "it's said" : "dikatakan",
+                        'e': targetLang === 'en' ? 'such' : 'seperti',
+                        'o': targetLang === 'en' ? '(command)' : '(perintah)'
+                    };
+                    
+                    return specialCases[lowerWord] || word;
+                }).join('');
+            }
+
+            // Translate English/Indonesian to Toki Pona (simplified)
+            function translateToTokiPona(text, sourceLang) {
+                // First check for exact phrase matches
+                const lowerText = text.toLowerCase();
+                for (const [phrase, translations] of Object.entries(nimi)) {
+                    if (translations[sourceLang === 'en' ? 0 : 1].toLowerCase().includes(lowerText)) {
+                        return phrase;
+                    }
+                }
+                
+                // Then handle individual words
+                const words = text.split(/(\s+|\W+)/);
+                
+                // Find Toki Pona words that match the English/Indonesian meaning
+                return words.map(word => {
+                    if (!word.trim() || /^\W+$/.test(word)) {
+                        return word;
+                    }
+                    
+                    const lowerWord = word.toLowerCase();
+                    
+                    // Search the dictionary for matches
+                    for (const [tokiWord, translations] of Object.entries(nimi)) {
+                        if (sourceLang === 'en' && translations[0].toLowerCase().includes(lowerWord)) {
+                            return tokiWord;
+                        }
+                        if (sourceLang === 'id' && translations[1] && translations[1].toLowerCase().includes(lowerWord)) {
+                            return tokiWord;
+                        }
+                    }
+                    
+                    return word;
+                }).join('');
+            }
+
+            // Handle translation
+            function translateText() {
+                const text = inputText.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some text to translate');
+                    return;
+                }
+                
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                
+                // Simulate processing delay (remove in production)
+                setTimeout(() => {
+                    let translation;
+                    
+                    if (currentInputLanguage === 'toki') {
+                        // Translate from Toki Pona to English/Indonesian/Toki Pona
+                        if (currentOutputLanguage === 'toki') {
+                            translation = text; // No translation needed
+                        } else {
+                            translation = translateTokiPona(text, currentOutputLanguage);
+                        }
+                    } else {
+                        // Translate from English/Indonesian to Toki Pona
+                        translation = translateToTokiPona(text, currentInputLanguage);
+                        
+                        // If output language is not Toki Pona (translate to English/Indonesian)
+                        if (currentOutputLanguage !== 'toki') {
+                            translation = translateTokiPona(translation, currentOutputLanguage);
+                        }
+                    }
+                    
+                    outputText.value = translation;
+                    loadingIndicator.style.display = 'none';
+                }, 500);
+            }
+
+            // Handle translation button click
+            translateBtn.addEventListener('click', translateText);
+
+            // Allow translation with Enter key (Shift+Enter for new line)
+            inputText.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    translateBtn.click();
+                }
+            });
+
+            // Sitelen Pona functions
+            function renderSitelenPona() {
+                const text = inputText.value.trim();
+                if (!text) {
+                    alert('Please enter some Toki Pona text first');
+                    return;
+                }
+                
+                sitelenPonaText.textContent = text;
+                
+                // Show the container
+                document.getElementById('symbolConverters').classList.add('active');
+            }
+
+            function downloadSitelenPonaImage() {
+                // Create a canvas to render the text for download
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas dimensions
+                canvas.width = 800;
+                canvas.height = 200;
+                
+                // Set font
+                ctx.font = '40px linja-pona';
+                ctx.textBaseline = 'top';
+                
+                // Draw white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw text
+                ctx.fillStyle = 'black';
+                ctx.fillText(sitelenPonaText.textContent, 10, 10);
+                
+                // Create download link
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataURL;
+                link.download = 'sitelen-pona.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Event listeners for symbol converter buttons
+            sitelenPonaBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                renderSitelenPona();
+            });
+            
+            downloadSitelenPona.addEventListener('click', downloadSitelenPonaImage);
+        });
+    </script>
+</body>
+</html>
