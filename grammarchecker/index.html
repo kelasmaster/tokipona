@@ -1,63 +1,600 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Toki Pona Grammar Checker</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 2em auto; padding: 1em; }
-    textarea { width: 100%; height: 100px; font-size: 1.2em; }
-    .error { color: red; margin-top: 1em; }
-    .success { color: green; margin-top: 1em; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toki Pona Grammar Checker</title>
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4ECDC4;
+            --dark-color: #292F36;
+            --light-color: #F7FFF7;
+            --warning-color: #FFE66D;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-color);
+            font-style: italic;
+        }
+
+        .app-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex-grow: 1;
+        }
+
+        .check-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .check-btn:hover {
+            background-color: #e05555;
+        }
+
+        .clear-btn {
+            background-color: var(--dark-color);
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background-color: #1a1f24;
+        }
+
+        .examples-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .examples-btn:hover {
+            background-color: #3ab7af;
+        }
+
+        .results-section {
+            margin-top: 20px;
+        }
+
+        .error-list {
+            list-style-type: none;
+        }
+
+        .error-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #fff8f8;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .warning-item {
+            border-left-color: var(--warning-color);
+            background-color: #fffdf2;
+        }
+
+        .info-item {
+            border-left-color: var(--secondary-color);
+            background-color: #f2fffe;
+        }
+
+        .error-message {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .error-context {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .highlight {
+            background-color: rgba(255, 215, 0, 0.3);
+            padding: 0 2px;
+        }
+
+        .no-errors {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .examples-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--dark-color);
+        }
+
+        .example-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .example-item:last-child {
+            border-bottom: none;
+        }
+
+        .example-text {
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        .example-translation {
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>Toki Pona Grammar Checker (Demo)</h2>
-  <textarea id="tpInput" placeholder="Write a sentence in Toki Pona...">mi moku e kili</textarea>
-  <button onclick="checkGrammar()">Check</button>
-  <div id="result"></div>
+    <div class="container">
+        <header>
+            <h1>Toki Pona Grammar Checker</h1>
+            <p class="subtitle">Check your Toki Pona sentences for common grammar mistakes</p>
+        </header>
 
-  <script>
-    function checkGrammar() {
-      const input = document.getElementById("tpInput").value.trim().toLowerCase();
-      const words = input.split(/\s+/);
-      const result = document.getElementById("result");
-      result.innerHTML = '';
+        <div class="app-container">
+            <div class="input-section">
+                <textarea id="toki-pona-input" placeholder="Enter your Toki Pona text here..."></textarea>
+                <div class="button-group">
+                    <button class="check-btn" id="check-grammar">Check Grammar</button>
+                    <button class="clear-btn" id="clear-text">Clear Text</button>
+                    <button class="examples-btn" id="show-examples">Examples</button>
+                </div>
+            </div>
 
-      if (words.length < 2) {
-        result.innerHTML = '<div class="error">Sentence too short to analyze.</div>';
-        return;
-      }
+            <div class="results-section">
+                <h2>Results</h2>
+                <div id="loading" class="hidden">Checking grammar...</div>
+                <ul id="error-list" class="error-list">
+                    <li class="no-errors">No text to check yet. Enter some Toki Pona and click "Check Grammar".</li>
+                </ul>
+            </div>
+        </div>
 
-      const particles = ["li", "e", "la", "en", "anu", "pi", "taso", "kin"];
-      const pronouns = ["mi", "sina"];
-      const wordSet = new Set(words);
+        <footer>
+            <p>Made with ❤️ for Toki Pona learners | Not an official tool</p>
+        </footer>
+    </div>
 
-      // Check li usage
-      const liIndex = words.indexOf("li");
-      if (pronouns.includes(words[0]) && liIndex !== -1) {
-        result.innerHTML += '<div class="error">"mi" or "sina" do not need "li".</div>';
-        return;
-      }
-      if (!pronouns.includes(words[0]) && liIndex === -1) {
-        result.innerHTML += '<div class="error">Missing "li" after subject.</div>';
-        return;
-      }
+    <div id="examples-modal" class="examples-modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Toki Pona Examples</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <div class="examples-list">
+                <div class="example-item">
+                    <div class="example-text">mi pona e sina</div>
+                    <div class="example-translation">I make you good / I fix you</div>
+                </div>
+                <div class="example-item">
+                    <div class="example-text">sina moku e kili</div>
+                    <div class="example-translation">You eat the fruit</div>
+                </div>
+                <div class="example-item">
+                    <div class="example-text">ona li lukin e waso</div>
+                    <div class="example-translation">They look at the bird</div>
+                </div>
+                <div class="example-item">
+                    <div class="example-text">ni li suwi a</div>
+                    <div class="example-translation">This is so sweet!</div>
+                </div>
+                <div class="example-item">
+                    <div class="example-text">mi wile tawa tomo sina</div>
+                    <div class="example-translation">I want to go to your house</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      // Check e usage
-      const eIndices = words.map((w, i) => w === "e" ? i : -1).filter(i => i !== -1);
-      for (let eIndex of eIndices) {
-        if (eIndex === 0 || eIndex === words.length - 1) {
-          result.innerHTML += '<div class="error">"e" must be between verb and object.</div>';
-          return;
-        }
-        if (particles.includes(words[eIndex + 1])) {
-          result.innerHTML += '<div class="error">"e" must be followed by a valid object, not a particle.</div>';
-          return;
-        }
-      }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const inputTextarea = document.getElementById('toki-pona-input');
+            const checkGrammarBtn = document.getElementById('check-grammar');
+            const clearTextBtn = document.getElementById('clear-text');
+            const showExamplesBtn = document.getElementById('show-examples');
+            const closeModalBtn = document.getElementById('close-modal');
+            const examplesModal = document.getElementById('examples-modal');
+            const errorList = document.getElementById('error-list');
+            const loadingIndicator = document.getElementById('loading');
 
-      result.innerHTML = '<div class="success">✅ Sentence seems grammatically correct.</div>';
-    }
-  </script>
+            // Toki Pona word lists
+            const officialWords = [
+                'a', 'ala', 'ale', 'anpa', 'ante', 'anu', 'awen', 'e', 'en', 'esun', 'ijo', 'ike', 'ilo', 'insa', 
+                'jaki', 'jan', 'jelo', 'jo', 'kala', 'kalama', 'kama', 'kasi', 'ken', 'kepeken', 'kili', 'kin', 
+                'kiwen', 'ko', 'kon', 'kule', 'kulupu', 'kute', 'la', 'lape', 'laso', 'lawa', 'len', 'lete', 'li', 
+                'lili', 'linja', 'lipu', 'loje', 'lon', 'luka', 'lukin', 'lupa', 'ma', 'mama', 'mani', 'meli', 'mi', 
+                'mije', 'moku', 'moli', 'monsi', 'mu', 'mun', 'musi', 'mute', 'nanpa', 'nasa', 'nasin', 'nena', 'ni', 
+                'nimi', 'noka', 'o', 'olin', 'ona', 'open', 'pakala', 'pali', 'palisa', 'pan', 'pana', 'pi', 'pilin', 
+                'pimeja', 'pini', 'pipi', 'poka', 'poki', 'pona', 'pu', 'sama', 'seli', 'selo', 'seme', 'sewi', 
+                'sijelo', 'sike', 'sin', 'sina', 'sinpin', 'sitelen', 'sona', 'soweli', 'suli', 'suno', 'supa', 
+                'suwi', 'tan', 'taso', 'tawa', 'telo', 'tenpo', 'toki', 'tomo', 'tu', 'unpa', 'uta', 'utala', 
+                'walo', 'wan', 'waso', 'wawa', 'weka', 'wile'
+            ];
+
+            const commonNonOfficialWords = [
+                'epiku', 'jasima', 'kijetesantakalu', 'kin', 'kipisi', 'kokosila', 'ku', 'lanpan', 'leko', 'meso', 
+                'misikeke', 'monsuta', 'n', 'namako', 'oko', 'pake', 'pata', 'po', 'polinpin', 'pom', 'pop', 'samu', 
+                'soto', 'te', 'tiki', 'tonsi', 'u', 'um', 'unu', 'wa', 'wuwojiti', 'yupekosi'
+            ];
+
+            // Event Listeners
+            checkGrammarBtn.addEventListener('click', checkGrammar);
+            clearTextBtn.addEventListener('click', clearText);
+            showExamplesBtn.addEventListener('click', showExamples);
+            closeModalBtn.addEventListener('click', hideExamples);
+
+            // Functions
+            function checkGrammar() {
+                const text = inputTextarea.value.trim();
+                
+                if (!text) {
+                    showNoTextMessage();
+                    return;
+                }
+
+                showLoading();
+                
+                // Simulate processing delay
+                setTimeout(() => {
+                    const errors = analyzeText(text);
+                    displayResults(errors);
+                }, 500);
+            }
+
+            function analyzeText(text) {
+                const errors = [];
+                const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+                
+                sentences.forEach((sentence, sentenceIndex) => {
+                    const words = sentence.trim().split(/\s+/);
+                    
+                    // Check for common errors
+                    
+                    // 1. Check for invalid words
+                    words.forEach((word, wordIndex) => {
+                        const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+                        
+                        if (!officialWords.includes(cleanWord) {
+                            if (!commonNonOfficialWords.includes(cleanWord)) {
+                                errors.push({
+                                    type: 'error',
+                                    message: `"${cleanWord}" might not be a valid Toki Pona word`,
+                                    context: sentence,
+                                    position: { sentenceIndex, wordIndex },
+                                    suggestion: 'Check the official word list or community words'
+                                });
+                            } else {
+                                errors.push({
+                                    type: 'warning',
+                                    message: `"${cleanWord}" is a common non-official word`,
+                                    context: sentence,
+                                    position: { sentenceIndex, wordIndex },
+                                    suggestion: 'Be aware this might not be understood by all speakers'
+                                });
+                            }
+                        }
+                    });
+                    
+                    // 2. Check for "li" usage after "mi" or "sina"
+                    if (words.length > 1) {
+                        const firstWord = words[0].toLowerCase();
+                        if ((firstWord === 'mi' || firstWord === 'sina') && words[1].toLowerCase() === 'li') {
+                            errors.push({
+                                type: 'error',
+                                message: `"${firstWord}" should not be followed by "li"`,
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: 1 },
+                                suggestion: `Remove "li" after "${firstWord}"`
+                            });
+                        }
+                    }
+                    
+                    // 3. Check for missing "li" after other subjects
+                    if (words.length > 1) {
+                        const firstWord = words[0].toLowerCase();
+                        if (firstWord !== 'mi' && firstWord !== 'sina' && words[1].toLowerCase() !== 'li') {
+                            errors.push({
+                                type: 'error',
+                                message: 'Missing "li" after subject',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: 1 },
+                                suggestion: 'Add "li" after the subject'
+                            });
+                        }
+                    }
+                    
+                    // 4. Check for proper "e" usage
+                    const hasE = words.some(w => w.toLowerCase() === 'e');
+                    if (hasE) {
+                        const eIndex = words.findIndex(w => w.toLowerCase() === 'e');
+                        if (eIndex === 0) {
+                            errors.push({
+                                type: 'error',
+                                message: '"e" should not be at the start of a sentence',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: eIndex },
+                                suggestion: 'Add a subject and verb before "e"'
+                            });
+                        }
+                        
+                        if (eIndex === words.length - 1) {
+                            errors.push({
+                                type: 'error',
+                                message: '"e" should not be at the end of a sentence',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: eIndex },
+                                suggestion: 'Add a direct object after "e"'
+                            });
+                        }
+                    }
+                    
+                    // 5. Check for proper "pi" usage
+                    const piIndices = [];
+                    words.forEach((word, index) => {
+                        if (word.toLowerCase() === 'pi') piIndices.push(index);
+                    });
+                    
+                    piIndices.forEach(piIndex => {
+                        if (piIndex === 0) {
+                            errors.push({
+                                type: 'error',
+                                message: '"pi" should not be at the start of a sentence',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: piIndex },
+                                suggestion: 'Add a noun before "pi"'
+                            });
+                        }
+                        
+                        if (piIndex === words.length - 1) {
+                            errors.push({
+                                type: 'error',
+                                message: '"pi" should not be at the end of a sentence',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: piIndex },
+                                suggestion: 'Add a modifier after "pi"'
+                            });
+                        }
+                        
+                        if (piIndex > 0 && words[piIndex - 1].toLowerCase() === 'pi') {
+                            errors.push({
+                                type: 'error',
+                                message: 'Consecutive "pi" words',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: piIndex },
+                                suggestion: 'Avoid multiple "pi" in a row'
+                            });
+                        }
+                    });
+                    
+                    // 6. Check for proper "la" usage
+                    const laIndex = words.findIndex(w => w.toLowerCase() === 'la');
+                    if (laIndex >= 0) {
+                        if (laIndex === 0) {
+                            errors.push({
+                                type: 'warning',
+                                message: '"la" at the start of a sentence might be unclear',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: laIndex },
+                                suggestion: 'Consider adding context before "la"'
+                            });
+                        }
+                        
+                        if (laIndex === words.length - 1) {
+                            errors.push({
+                                type: 'error',
+                                message: '"la" should not be at the end of a sentence',
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: laIndex },
+                                suggestion: 'Add a main clause after "la"'
+                            });
+                        }
+                    }
+                });
+                
+                return errors;
+            }
+
+            function displayResults(errors) {
+                hideLoading();
+                
+                if (errors.length === 0) {
+                    errorList.innerHTML = '<li class="no-errors">No grammar issues found! 🎉</li>';
+                    return;
+                }
+                
+                errorList.innerHTML = '';
+                
+                errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.className = `error-item ${error.type}-item`;
+                    
+                    const message = document.createElement('div');
+                    message.className = 'error-message';
+                    message.textContent = error.message;
+                    
+                    const suggestion = document.createElement('div');
+                    suggestion.textContent = `Suggestion: ${error.suggestion}`;
+                    
+                    const context = document.createElement('div');
+                    context.className = 'error-context';
+                    
+                    // Highlight the problematic word in context
+                    const words = error.context.split(/\s+/);
+                    if (error.position && error.position.wordIndex >= 0 && error.position.wordIndex < words.length) {
+                        words[error.position.wordIndex] = `<span class="highlight">${words[error.position.wordIndex]}</span>`;
+                    }
+                    context.innerHTML = words.join(' ');
+                    
+                    li.appendChild(message);
+                    li.appendChild(suggestion);
+                    li.appendChild(context);
+                    
+                    errorList.appendChild(li);
+                });
+            }
+
+            function showNoTextMessage() {
+                errorList.innerHTML = '<li class="no-errors">Please enter some Toki Pona text to check.</li>';
+            }
+
+            function clearText() {
+                inputTextarea.value = '';
+                showNoTextMessage();
+            }
+
+            function showLoading() {
+                loadingIndicator.classList.remove('hidden');
+                errorList.classList.add('hidden');
+            }
+
+            function hideLoading() {
+                loadingIndicator.classList.add('hidden');
+                errorList.classList.remove('hidden');
+            }
+
+            function showExamples() {
+                examplesModal.classList.remove('hidden');
+            }
+
+            function hideExamples() {
+                examplesModal.classList.add('hidden');
+            }
+
+            // Close modal when clicking outside
+            examplesModal.addEventListener('click', function(e) {
+                if (e.target === examplesModal) {
+                    hideExamples();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
