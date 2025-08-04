@@ -176,42 +176,16 @@
             display: none;
         }
 
-        .examples-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: white;
+        .examples-section {
+            margin-top: 30px;
             padding: 20px;
-            border-radius: 10px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
         }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--dark-color);
+        .examples-list {
+            margin-top: 15px;
         }
 
         .example-item {
@@ -227,10 +201,12 @@
         .example-text {
             font-style: italic;
             margin-bottom: 5px;
+            color: var(--dark-color);
         }
 
         .example-translation {
             font-weight: bold;
+            color: var(--primary-color);
         }
 
         footer {
@@ -264,7 +240,7 @@
                 <div class="button-group">
                     <button class="check-btn" id="check-grammar">Check Grammar</button>
                     <button class="clear-btn" id="clear-text">Clear Text</button>
-                    <button class="examples-btn" id="show-examples">Examples</button>
+                    <button class="examples-btn" id="toggle-examples">Show Examples</button>
                 </div>
             </div>
 
@@ -275,42 +251,45 @@
                     <li class="no-errors">No text to check yet. Enter some Toki Pona and click "Check Grammar".</li>
                 </ul>
             </div>
+
+            <div id="examples-section" class="examples-section hidden">
+                <h2>Toki Pona Examples</h2>
+                <div class="examples-list">
+                    <div class="example-item">
+                        <div class="example-text">mi pona e sina</div>
+                        <div class="example-translation">I make you good / I fix you</div>
+                    </div>
+                    <div class="example-item">
+                        <div class="example-text">sina moku e kili</div>
+                        <div class="example-translation">You eat the fruit</div>
+                    </div>
+                    <div class="example-item">
+                        <div class="example-text">ona li lukin e waso</div>
+                        <div class="example-translation">They look at the bird</div>
+                    </div>
+                    <div class="example-item">
+                        <div class="example-text">ni li suwi a</div>
+                        <div class="example-translation">This is so sweet!</div>
+                    </div>
+                    <div class="example-item">
+                        <div class="example-text">mi wile tawa tomo sina</div>
+                        <div class="example-translation">I want to go to your house</div>
+                    </div>
+                    <div class="example-item">
+                        <div class="example-text">jan li pana e moku tawa soweli</div>
+                        <div class="example-translation">The person gives food to the animal</div>
+                    </div>
+                    <div class="example-item">
+                        <div class="example-text">tomo pi jan lili</div>
+                        <div class="example-translation">House of children / Children's house</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer>
             <p>Made with ❤️ for Toki Pona learners | Not an official tool</p>
         </footer>
-    </div>
-
-    <div id="examples-modal" class="examples-modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Toki Pona Examples</h2>
-                <button class="close-modal" id="close-modal">&times;</button>
-            </div>
-            <div class="examples-list">
-                <div class="example-item">
-                    <div class="example-text">mi pona e sina</div>
-                    <div class="example-translation">I make you good / I fix you</div>
-                </div>
-                <div class="example-item">
-                    <div class="example-text">sina moku e kili</div>
-                    <div class="example-translation">You eat the fruit</div>
-                </div>
-                <div class="example-item">
-                    <div class="example-text">ona li lukin e waso</div>
-                    <div class="example-translation">They look at the bird</div>
-                </div>
-                <div class="example-item">
-                    <div class="example-text">ni li suwi a</div>
-                    <div class="example-translation">This is so sweet!</div>
-                </div>
-                <div class="example-item">
-                    <div class="example-text">mi wile tawa tomo sina</div>
-                    <div class="example-translation">I want to go to your house</div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -319,9 +298,8 @@
             const inputTextarea = document.getElementById('toki-pona-input');
             const checkGrammarBtn = document.getElementById('check-grammar');
             const clearTextBtn = document.getElementById('clear-text');
-            const showExamplesBtn = document.getElementById('show-examples');
-            const closeModalBtn = document.getElementById('close-modal');
-            const examplesModal = document.getElementById('examples-modal');
+            const toggleExamplesBtn = document.getElementById('toggle-examples');
+            const examplesSection = document.getElementById('examples-section');
             const errorList = document.getElementById('error-list');
             const loadingIndicator = document.getElementById('loading');
 
@@ -348,8 +326,7 @@
             // Event Listeners
             checkGrammarBtn.addEventListener('click', checkGrammar);
             clearTextBtn.addEventListener('click', clearText);
-            showExamplesBtn.addEventListener('click', showExamples);
-            closeModalBtn.addEventListener('click', hideExamples);
+            toggleExamplesBtn.addEventListener('click', toggleExamples);
 
             // Functions
             function checkGrammar() {
@@ -371,155 +348,268 @@
 
             function analyzeText(text) {
                 const errors = [];
-                const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+                const sentences = splitSentences(text);
                 
                 sentences.forEach((sentence, sentenceIndex) => {
                     const words = sentence.trim().split(/\s+/);
                     
-                    // Check for common errors
+                    // Check for invalid words first
+                    checkInvalidWords(words, sentence, sentenceIndex, errors);
                     
-                    // 1. Check for invalid words
-                    words.forEach((word, wordIndex) => {
-                        const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
-                        
-                        if (!officialWords.includes(cleanWord) {
-                            if (!commonNonOfficialWords.includes(cleanWord)) {
-                                errors.push({
-                                    type: 'error',
-                                    message: `"${cleanWord}" might not be a valid Toki Pona word`,
-                                    context: sentence,
-                                    position: { sentenceIndex, wordIndex },
-                                    suggestion: 'Check the official word list or community words'
-                                });
-                            } else {
-                                errors.push({
-                                    type: 'warning',
-                                    message: `"${cleanWord}" is a common non-official word`,
-                                    context: sentence,
-                                    position: { sentenceIndex, wordIndex },
-                                    suggestion: 'Be aware this might not be understood by all speakers'
-                                });
-                            }
-                        }
-                    });
+                    // Check sentence structure
+                    checkSentenceStructure(words, sentence, sentenceIndex, errors);
                     
-                    // 2. Check for "li" usage after "mi" or "sina"
-                    if (words.length > 1) {
-                        const firstWord = words[0].toLowerCase();
-                        if ((firstWord === 'mi' || firstWord === 'sina') && words[1].toLowerCase() === 'li') {
+                    // Check for proper "e" usage (objects)
+                    checkObjectMarkerE(words, sentence, sentenceIndex, errors);
+                    
+                    // Check for proper "pi" usage (possession)
+                    checkPossessivePi(words, sentence, sentenceIndex, errors);
+                    
+                    // Check for proper "la" usage
+                    checkContextMarkerLa(words, sentence, sentenceIndex, errors);
+                });
+                
+                return errors;
+            }
+
+            function splitSentences(text) {
+                // Split by sentence-ending punctuation but keep the punctuation
+                return text.match(/[^.!?]+[.!?]*/g) || [];
+            }
+
+            function checkInvalidWords(words, sentence, sentenceIndex, errors) {
+                words.forEach((word, wordIndex) => {
+                    const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+                    
+                    if (!officialWords.includes(cleanWord)) {
+                        if (!commonNonOfficialWords.includes(cleanWord)) {
                             errors.push({
                                 type: 'error',
-                                message: `"${firstWord}" should not be followed by "li"`,
+                                message: `"${cleanWord}" might not be a valid Toki Pona word`,
                                 context: sentence,
-                                position: { sentenceIndex, wordIndex: 1 },
-                                suggestion: `Remove "li" after "${firstWord}"`
+                                position: { sentenceIndex, wordIndex },
+                                suggestion: 'Check the official word list or community words'
+                            });
+                        } else {
+                            errors.push({
+                                type: 'warning',
+                                message: `"${cleanWord}" is a common non-official word`,
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex },
+                                suggestion: 'Be aware this might not be understood by all speakers'
                             });
                         }
                     }
-                    
-                    // 3. Check for missing "li" after other subjects
-                    if (words.length > 1) {
-                        const firstWord = words[0].toLowerCase();
-                        if (firstWord !== 'mi' && firstWord !== 'sina' && words[1].toLowerCase() !== 'li') {
-                            errors.push({
-                                type: 'error',
-                                message: 'Missing "li" after subject',
-                                context: sentence,
-                                position: { sentenceIndex, wordIndex: 1 },
-                                suggestion: 'Add "li" after the subject'
-                            });
-                        }
+                });
+            }
+
+            function checkSentenceStructure(words, sentence, sentenceIndex, errors) {
+                if (words.length === 0) return;
+                
+                const firstWord = words[0].toLowerCase();
+                
+                // Check for "li" usage after "mi" or "sina"
+                if (words.length > 1) {
+                    if ((firstWord === 'mi' || firstWord === 'sina') && words[1].toLowerCase() === 'li') {
+                        errors.push({
+                            type: 'error',
+                            message: `"${firstWord}" should not be followed by "li"`,
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: 1 },
+                            suggestion: `Remove "li" after "${firstWord}"`
+                        });
+                    }
+                }
+                
+                // Check for missing "li" after other subjects
+                if (words.length > 1) {
+                    if (firstWord !== 'mi' && firstWord !== 'sina' && firstWord !== 'o' && 
+                        words[1].toLowerCase() !== 'li') {
+                        errors.push({
+                            type: 'error',
+                            message: 'Missing "li" after subject',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: 1 },
+                            suggestion: 'Add "li" after the subject'
+                        });
+                    }
+                }
+            }
+
+            function checkObjectMarkerE(words, sentence, sentenceIndex, errors) {
+                const eIndices = [];
+                words.forEach((word, index) => {
+                    if (word.toLowerCase() === 'e') eIndices.push(index);
+                });
+                
+                eIndices.forEach(eIndex => {
+                    // Check if "e" is at the start
+                    if (eIndex === 0) {
+                        errors.push({
+                            type: 'error',
+                            message: '"e" should not be at the start of a sentence',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: eIndex },
+                            suggestion: 'Add a subject and verb before "e"'
+                        });
                     }
                     
-                    // 4. Check for proper "e" usage
-                    const hasE = words.some(w => w.toLowerCase() === 'e');
-                    if (hasE) {
-                        const eIndex = words.findIndex(w => w.toLowerCase() === 'e');
-                        if (eIndex === 0) {
+                    // Check if "e" is at the end
+                    if (eIndex === words.length - 1) {
+                        errors.push({
+                            type: 'error',
+                            message: '"e" should not be at the end of a sentence',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: eIndex },
+                            suggestion: 'Add a direct object after "e"'
+                        });
+                    }
+                    
+                    // Check if there's a word after "e"
+                    if (eIndex < words.length - 1) {
+                        const nextWord = words[eIndex + 1].toLowerCase();
+                        if (nextWord === 'e' || nextWord === 'pi' || nextWord === 'la') {
                             errors.push({
                                 type: 'error',
-                                message: '"e" should not be at the start of a sentence',
+                                message: `"e" should be followed by a noun, not "${nextWord}"`,
                                 context: sentence,
-                                position: { sentenceIndex, wordIndex: eIndex },
-                                suggestion: 'Add a subject and verb before "e"'
-                            });
-                        }
-                        
-                        if (eIndex === words.length - 1) {
-                            errors.push({
-                                type: 'error',
-                                message: '"e" should not be at the end of a sentence',
-                                context: sentence,
-                                position: { sentenceIndex, wordIndex: eIndex },
+                                position: { sentenceIndex, wordIndex: eIndex + 1 },
                                 suggestion: 'Add a direct object after "e"'
                             });
                         }
                     }
                     
-                    // 5. Check for proper "pi" usage
-                    const piIndices = [];
-                    words.forEach((word, index) => {
-                        if (word.toLowerCase() === 'pi') piIndices.push(index);
-                    });
-                    
-                    piIndices.forEach(piIndex => {
-                        if (piIndex === 0) {
-                            errors.push({
-                                type: 'error',
-                                message: '"pi" should not be at the start of a sentence',
-                                context: sentence,
-                                position: { sentenceIndex, wordIndex: piIndex },
-                                suggestion: 'Add a noun before "pi"'
-                            });
+                    // Check if there's a verb before "e"
+                    let hasVerbBefore = false;
+                    for (let i = 0; i < eIndex; i++) {
+                        const word = words[i].toLowerCase();
+                        if (word !== 'li' && word !== 'mi' && word !== 'sina' && word !== 'ona') {
+                            hasVerbBefore = true;
+                            break;
                         }
-                        
-                        if (piIndex === words.length - 1) {
+                    }
+                    
+                    if (!hasVerbBefore) {
+                        errors.push({
+                            type: 'error',
+                            message: 'Missing verb before "e"',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: eIndex },
+                            suggestion: 'Add a verb before "e" to indicate the action'
+                        });
+                    }
+                });
+            }
+
+            function checkPossessivePi(words, sentence, sentenceIndex, errors) {
+                const piIndices = [];
+                words.forEach((word, index) => {
+                    if (word.toLowerCase() === 'pi') piIndices.push(index);
+                });
+                
+                piIndices.forEach(piIndex => {
+                    // Check if "pi" is at the start
+                    if (piIndex === 0) {
+                        errors.push({
+                            type: 'error',
+                            message: '"pi" should not be at the start of a sentence',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: piIndex },
+                            suggestion: 'Add a noun before "pi"'
+                        });
+                    }
+                    
+                    // Check if "pi" is at the end
+                    if (piIndex === words.length - 1) {
+                        errors.push({
+                            type: 'error',
+                            message: '"pi" should not be at the end of a sentence',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: piIndex },
+                            suggestion: 'Add a modifier after "pi"'
+                        });
+                    }
+                    
+                    // Check for consecutive "pi"
+                    if (piIndex > 0 && words[piIndex - 1].toLowerCase() === 'pi') {
+                        errors.push({
+                            type: 'error',
+                            message: 'Consecutive "pi" words',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: piIndex },
+                            suggestion: 'Avoid multiple "pi" in a row'
+                        });
+                    }
+                    
+                    // Check if there's a modifier after "pi"
+                    if (piIndex < words.length - 1) {
+                        const nextWord = words[piIndex + 1].toLowerCase();
+                        if (nextWord === 'e' || nextWord === 'pi' || nextWord === 'la') {
                             errors.push({
                                 type: 'error',
-                                message: '"pi" should not be at the end of a sentence',
+                                message: `"pi" should be followed by a modifier, not "${nextWord}"`,
                                 context: sentence,
-                                position: { sentenceIndex, wordIndex: piIndex },
+                                position: { sentenceIndex, wordIndex: piIndex + 1 },
                                 suggestion: 'Add a modifier after "pi"'
                             });
                         }
-                        
-                        if (piIndex > 0 && words[piIndex - 1].toLowerCase() === 'pi') {
-                            errors.push({
-                                type: 'error',
-                                message: 'Consecutive "pi" words',
-                                context: sentence,
-                                position: { sentenceIndex, wordIndex: piIndex },
-                                suggestion: 'Avoid multiple "pi" in a row'
-                            });
-                        }
-                    });
+                    }
                     
-                    // 6. Check for proper "la" usage
-                    const laIndex = words.findIndex(w => w.toLowerCase() === 'la');
-                    if (laIndex >= 0) {
-                        if (laIndex === 0) {
-                            errors.push({
-                                type: 'warning',
-                                message: '"la" at the start of a sentence might be unclear',
-                                context: sentence,
-                                position: { sentenceIndex, wordIndex: laIndex },
-                                suggestion: 'Consider adding context before "la"'
-                            });
-                        }
-                        
-                        if (laIndex === words.length - 1) {
+                    // Check if there's a noun before "pi"
+                    if (piIndex > 0) {
+                        const prevWord = words[piIndex - 1].toLowerCase();
+                        if (prevWord === 'e' || prevWord === 'li' || prevWord === 'o') {
                             errors.push({
                                 type: 'error',
-                                message: '"la" should not be at the end of a sentence',
+                                message: `"pi" should be preceded by a noun, not "${prevWord}"`,
                                 context: sentence,
-                                position: { sentenceIndex, wordIndex: laIndex },
-                                suggestion: 'Add a main clause after "la"'
+                                position: { sentenceIndex, wordIndex: piIndex - 1 },
+                                suggestion: 'Add a noun before "pi"'
                             });
                         }
                     }
                 });
-                
-                return errors;
+            }
+
+            function checkContextMarkerLa(words, sentence, sentenceIndex, errors) {
+                const laIndex = words.findIndex(w => w.toLowerCase() === 'la');
+                if (laIndex >= 0) {
+                    // Check if "la" is at the start
+                    if (laIndex === 0) {
+                        errors.push({
+                            type: 'warning',
+                            message: '"la" at the start of a sentence might be unclear',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: laIndex },
+                            suggestion: 'Consider adding context before "la"'
+                        });
+                    }
+                    
+                    // Check if "la" is at the end
+                    if (laIndex === words.length - 1) {
+                        errors.push({
+                            type: 'error',
+                            message: '"la" should not be at the end of a sentence',
+                            context: sentence,
+                            position: { sentenceIndex, wordIndex: laIndex },
+                            suggestion: 'Add a main clause after "la"'
+                        });
+                    }
+                    
+                    // Check if there's content after "la"
+                    if (laIndex < words.length - 1) {
+                        const nextWord = words[laIndex + 1].toLowerCase();
+                        if (nextWord === 'e' || nextWord === 'pi' || nextWord === 'la') {
+                            errors.push({
+                                type: 'error',
+                                message: `"la" should be followed by a main clause, not "${nextWord}"`,
+                                context: sentence,
+                                position: { sentenceIndex, wordIndex: laIndex + 1 },
+                                suggestion: 'Add a main clause after "la"'
+                            });
+                        }
+                    }
+                }
             }
 
             function displayResults(errors) {
@@ -580,20 +670,16 @@
                 errorList.classList.remove('hidden');
             }
 
-            function showExamples() {
-                examplesModal.classList.remove('hidden');
-            }
-
-            function hideExamples() {
-                examplesModal.classList.add('hidden');
-            }
-
-            // Close modal when clicking outside
-            examplesModal.addEventListener('click', function(e) {
-                if (e.target === examplesModal) {
-                    hideExamples();
+            function toggleExamples() {
+                const isHidden = examplesSection.classList.contains('hidden');
+                examplesSection.classList.toggle('hidden');
+                toggleExamplesBtn.textContent = isHidden ? 'Hide Examples' : 'Show Examples';
+                
+                // Scroll to examples if showing
+                if (isHidden) {
+                    examplesSection.scrollIntoView({ behavior: 'smooth' });
                 }
-            });
+            }
         });
     </script>
 </body>
