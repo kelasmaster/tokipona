@@ -3,40 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Toki Pona Prompt Generator</title>
+  <title>Toki Pona Symbol Generator</title>
   <style>
+    :root {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --input-bg: #1e1e1e;
+      --button-bg: #333;
+      --button-hover: #444;
+      --symbol-shadow: #00d1ff;
+    }
+
+    .light-mode {
+      --bg-color: #fefbe9;
+      --text-color: #333;
+      --input-bg: #ffffff;
+      --button-bg: #816797;
+      --button-hover: #6e5484;
+      --symbol-shadow: #816797;
+    }
+
     body {
-      font-family: sans-serif;
-      background-color: #fefbe9;
-      color: #333;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       padding: 2rem;
+      transition: background-color 0.3s, color 0.3s;
     }
+
     h1 {
-      color: #816797;
+      color: var(--symbol-shadow);
+      margin-bottom: 1.5rem;
     }
-    #prompt, #translation {
+
+    #prompt {
       font-size: 1.4rem;
+      margin: 1.5rem 0;
+    }
+
+    #translation {
+      font-size: 1.2rem;
       margin: 1rem 0;
-      color: #444;
+      display: none;
+      font-style: italic;
+      color: #aaa;
     }
-    .glyphs {
-      font-size: 2rem;
-      margin-bottom: 1rem;
+
+    #symbol {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
     }
+
+    .symbol-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .symbol-container img {
+      width: 20vw;
+      max-width: 96px;
+      height: auto;
+      filter: drop-shadow(0 0 3px var(--symbol-shadow));
+    }
+
     button {
       margin: 0.5rem;
       padding: 0.6rem 1.2rem;
       font-size: 1rem;
-      background: #816797;
+      background: var(--button-bg);
       color: #fff;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      transition: background 0.2s;
     }
+
     button:hover {
-      background: #6e5484;
+      background: var(--button-hover);
     }
+
     #history {
       margin-top: 2rem;
       text-align: left;
@@ -44,34 +94,101 @@
       margin-left: auto;
       margin-right: auto;
     }
+
     #history h3 {
       margin-bottom: 0.5rem;
+      color: var(--symbol-shadow);
     }
+
     .history-item {
       font-size: 1rem;
-      margin: 0.3rem 0;
-      border-bottom: 1px dotted #aaa;
-      padding-bottom: 0.3rem;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 5px;
+      background-color: rgba(0, 209, 255, 0.1);
+    }
+
+    .toggle-container {
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--symbol-shadow);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
     }
   </style>
 </head>
 <body>
-  <h1>Toki Pona Prompt Generator</h1>
+  <h1>Toki Pona Symbol Generator</h1>
 
-  <div class="glyphs" id="glyphs">🌞👤🏃</div>
-  <div id="prompt">Click to generate a prompt.</div>
-  <div id="translation" style="display:none; font-style: italic;"></div>
+  <div class="toggle-container">
+    <label class="switch">
+      <input type="checkbox" id="darkModeToggle">
+      <span class="slider"></span>
+    </label>
+    <span>Dark Mode</span>
+  </div>
 
-  <button onclick="generatePrompt()">🔁 Generate Prompt</button>
-  <button onclick="toggleTranslation()">🧾 Toggle Translation</button>
-  <button onclick="savePrompt()">💾 Save Prompt</button>
+  <div id="prompt">Click "Generate Prompt" to create a Toki Pona sentence</div>
+  <div id="translation"></div>
+  
+  <div id="symbol"></div>
+
+  <button id="generateBtn">Generate Prompt</button>
+  <button id="translationBtn">Toggle Translation</button>
+  <button id="saveBtn">Save Prompt</button>
 
   <div id="history">
-    <h3>📜 Saved Prompts</h3>
+    <h3>Saved Prompts</h3>
     <div id="savedList"></div>
   </div>
 
   <script>
+    // Toki Pona word lists
     const subjects = ["jan", "soweli", "meli", "mije", "kili", "tomo", "ilo", "suno"];
     const verbs = ["tawa", "pali", "lukin", "kute", "kama", "awen", "moku", "weka"];
     const objects = ["tomo", "soweli", "kili", "ilo", "ma", "mun", "suno", "jan"];
@@ -83,30 +200,155 @@
       "sina o [V] e [B] [P]."
     ];
 
-    const simpleTranslations = {
-      jan: "person", soweli: "animal", meli: "woman", mije: "man", kili: "fruit/vegetable",
-      tomo: "house", ilo: "tool", suno: "sun", tawa: "go/travel", pali: "work/build",
-      lukin: "look/see", kute: "listen", kama: "come/become", awen: "stay/wait",
-      moku: "eat", weka: "away/remove", ma: "land", mun: "moon", kepeken: "use",
-      sama: "like/similar", waso: "bird", tenpo: "time", ni: "this", la: "contextual",
-      mi: "I", sina: "you", o: "imperative", e: "(marks direct object)", lon: "at/in"
-    };
-
-    const glyphMap = {
-      jan: "👤", soweli: "🐶", meli: "👩", mije: "👨", kili: "🥝", tomo: "🏠", ilo: "🔧",
-      suno: "🌞", tawa: "🏃", pali: "⚒️", lukin: "👁️", kute: "👂", kama: "📥", awen: "⏳",
-      moku: "🍽️", weka: "🚫", ma: "🌍", mun: "🌙", kepeken: "🔧", sama: "➰", waso: "🐦"
+    // Simple translations
+    const translations = {
+      "a": "ah, ha, uh",
+      "akesi": "reptile/amphibian",
+      "ala": "no, not",
+      "alasa": "hunt, forage",
+      "ale/ali": "all, everything",
+      "anpa": "low, down",
+      "ante": "different",
+      "anu": "or",
+      "awen": "stay, remain",
+      "e": "(direct object marker)",
+      "en": "and",
+      "esun": "market, shop",
+      "ijo": "thing",
+      "ike": "bad",
+      "ilo": "tool",
+      "insa": "inside",
+      "jaki": "dirty",
+      "jan": "person",
+      "jelo": "yellow",
+      "jo": "have",
+      "kala": "fish",
+      "kalama": "sound",
+      "kama": "come, become",
+      "kasi": "plant",
+      "ken": "can, may",
+      "kepeken": "use",
+      "kili": "fruit/vegetable",
+      "kin": "also, indeed",
+      "kipisi": "cut",
+      "kiwen": "hard object",
+      "ko": "semi-solid",
+      "kon": "air, spirit",
+      "kule": "color",
+      "kulupu": "group",
+      "kute": "hear",
+      "la": "(context marker)",
+      "lape": "sleep",
+      "laso": "blue/green",
+      "lawa": "head, lead",
+      "len": "cloth, clothing",
+      "lete": "cold",
+      "li": "(verb marker)",
+      "lili": "small",
+      "linja": "line, rope",
+      "lipu": "paper, document",
+      "loje": "red",
+      "lon": "true, present",
+      "luka": "hand, five",
+      "lukin": "see, look",
+      "lupa": "hole, door",
+      "ma": "land, earth",
+      "mama": "parent",
+      "mani": "money",
+      "meli": "woman",
+      "mi": "I, me",
+      "mije": "man",
+      "moku": "eat, food",
+      "moli": "die, dead",
+      "monsi": "back",
+      "mu": "(animal sound)",
+      "mun": "moon",
+      "musi": "fun, play",
+      "mute": "many",
+      "nanpa": "number",
+      "nasa": "crazy, weird",
+      "nasin": "way, path",
+      "nena": "bump, hill",
+      "ni": "this, that",
+      "nimi": "name, word",
+      "noka": "foot, leg",
+      "o": "(imperative)",
+      "oko": "eye",
+      "olin": "love",
+      "ona": "he, she, they",
+      "open": "open",
+      "pakala": "break, mistake",
+      "pali": "do, make",
+      "palisa": "stick, rod",
+      "pan": "bread, grain",
+      "pana": "give",
+      "pi": "of (modifier)",
+      "pilin": "feel, emotion",
+      "pimeja": "black",
+      "pini": "end, finish",
+      "pipi": "insect",
+      "poka": "side, with",
+      "poki": "container",
+      "pona": "good",
+      "sama": "same, similar",
+      "seli": "fire, hot",
+      "selo": "shell, skin",
+      "seme": "what?",
+      "sewi": "high, sacred",
+      "sijelo": "body",
+      "sike": "circle, round",
+      "sin": "new",
+      "sina": "you",
+      "sinpin": "face, front",
+      "sitelen": "picture, write",
+      "sona": "know",
+      "soweli": "animal",
+      "suli": "big, important",
+      "suno": "sun, light",
+      "supa": "surface",
+      "suwi": "sweet, cute",
+      "tan": "from, because",
+      "taso": "but, only",
+      "tawa": "go, move",
+      "telo": "water, liquid",
+      "tenpo": "time",
+      "toki": "speak, language",
+      "tomo": "house, building",
+      "tu": "two",
+      "unpa": "sex",
+      "uta": "mouth",
+      "utala": "fight",
+      "walo": "white",
+      "wan": "one",
+      "waso": "bird",
+      "wawa": "strong, power",
+      "weka": "away, absent",
+      "wile": "want, need"
     };
 
     let currentPrompt = "";
     let currentTranslation = "";
+    let savedPrompts = JSON.parse(localStorage.getItem("tp_prompts")) || [];
+    let showTranslation = false;
 
-    function getRandom(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
+    // DOM elements
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const generateBtn = document.getElementById('generateBtn');
+    const translationBtn = document.getElementById('translationBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const translationDiv = document.getElementById('translation');
 
-    function translateWord(word) {
-      return simpleTranslations[word] || word;
+    // Event listeners
+    darkModeToggle.addEventListener('change', toggleDarkMode);
+    generateBtn.addEventListener('click', generatePrompt);
+    translationBtn.addEventListener('click', toggleTranslation);
+    saveBtn.addEventListener('click', savePrompt);
+
+    // Initialize
+    renderSaved();
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('light-mode');
     }
 
     function generatePrompt() {
@@ -122,56 +364,96 @@
         .replace("[B]", B)
         .replace("[P]", P);
 
-      const allWords = currentPrompt
-        .replace(/[^\w\s]/gi, '')
-        .split(" ")
-        .map(w => translateWord(w))
-        .join(" ");
-
-      currentTranslation = allWords.charAt(0).toUpperCase() + allWords.slice(1) + ".";
-
       document.getElementById("prompt").innerText = currentPrompt;
-      document.getElementById("translation").style.display = "none";
+      
+      // Generate translation
+      currentTranslation = translateSentence(currentPrompt);
+      if (showTranslation) {
+        translationDiv.style.display = "block";
+        translationDiv.innerText = currentTranslation;
+      } else {
+        translationDiv.style.display = "none";
+      }
+      
+      displaySymbols(currentPrompt);
+    }
 
-      // Show glyphs based on most important 3 words
-      let words = currentPrompt.match(/\b\w+\b/g);
-      let mainGlyphs = words
-        .filter((w, i) => i < 6) // limit to early words
-        .map(w => glyphMap[w] || "")
-        .filter(g => g)
-        .slice(0, 3)
-        .join("");
-
-      document.getElementById("glyphs").innerText = mainGlyphs;
+    function translateSentence(sentence) {
+      return sentence.split(' ').map(word => {
+        const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+        return translations[cleanWord] || word;
+      }).join(' ');
     }
 
     function toggleTranslation() {
-      const trans = document.getElementById("translation");
-      trans.innerText = currentTranslation;
-      trans.style.display = trans.style.display === "none" ? "block" : "none";
+      showTranslation = !showTranslation;
+      if (showTranslation && currentTranslation) {
+        translationDiv.style.display = "block";
+        translationDiv.innerText = currentTranslation;
+      } else {
+        translationDiv.style.display = "none";
+      }
+    }
+
+    function getRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function displaySymbols(sentence) {
+      const words = sentence.split(/\s+/);
+      const symbolDiv = document.getElementById("symbol");
+      symbolDiv.innerHTML = "";
+
+      words.forEach(word => {
+        // Clean word by removing punctuation
+        const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+        if (!cleanWord) return;
+
+        const url = `https://sitelen.nimi.li/img/${cleanWord}.png`;
+        const img = new Image();
+        img.src = url;
+        img.alt = cleanWord;
+
+        img.onload = () => {
+          const container = document.createElement("div");
+          container.className = "symbol-container";
+          container.appendChild(img);
+          symbolDiv.appendChild(container);
+        };
+
+        img.onerror = () => {
+          // Skip displaying anything for words without symbols
+        };
+      });
     }
 
     function savePrompt() {
       if (!currentPrompt) return;
-      const saved = JSON.parse(localStorage.getItem("tp_prompts") || "[]");
-      saved.unshift({ prompt: currentPrompt, translation: currentTranslation });
-      localStorage.setItem("tp_prompts", JSON.stringify(saved.slice(0, 20))); // Keep last 20
+      
+      savedPrompts.unshift({
+        prompt: currentPrompt,
+        translation: currentTranslation
+      });
+      
+      if (savedPrompts.length > 20) {
+        savedPrompts = savedPrompts.slice(0, 20);
+      }
+      
+      localStorage.setItem("tp_prompts", JSON.stringify(savedPrompts));
       renderSaved();
     }
 
     function renderSaved() {
       const container = document.getElementById("savedList");
       container.innerHTML = "";
-      const saved = JSON.parse(localStorage.getItem("tp_prompts") || "[]");
-      saved.forEach(item => {
+      
+      savedPrompts.forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
-        div.innerHTML = `<strong>${item.prompt}</strong><br><em>${item.translation}</em>`;
+        div.innerHTML = `<strong>${item.prompt}</strong><br>${item.translation}`;
         container.appendChild(div);
       });
     }
-
-    renderSaved();
   </script>
 </body>
 </html>
