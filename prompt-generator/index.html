@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Toki Pona Prompt Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fefbe9;
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #816797;
+    }
+    #prompt, #translation {
+      font-size: 1.4rem;
+      margin: 1rem 0;
+      color: #444;
+    }
+    .glyphs {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      margin: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      background: #816797;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #6e5484;
+    }
+    #history {
+      margin-top: 2rem;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #history h3 {
+      margin-bottom: 0.5rem;
+    }
+    .history-item {
+      font-size: 1rem;
+      margin: 0.3rem 0;
+      border-bottom: 1px dotted #aaa;
+      padding-bottom: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Toki Pona Prompt Generator</h1>
+
+  <div class="glyphs" id="glyphs">🌞👤🏃</div>
+  <div id="prompt">Click to generate a prompt.</div>
+  <div id="translation" style="display:none; font-style: italic;"></div>
+
+  <button onclick="generatePrompt()">🔁 Generate Prompt</button>
+  <button onclick="toggleTranslation()">🧾 Toggle Translation</button>
+  <button onclick="savePrompt()">💾 Save Prompt</button>
+
+  <div id="history">
+    <h3>📜 Saved Prompts</h3>
+    <div id="savedList"></div>
+  </div>
+
+  <script>
+    const subjects = ["jan", "soweli", "meli", "mije", "kili", "tomo", "ilo", "suno"];
+    const verbs = ["tawa", "pali", "lukin", "kute", "kama", "awen", "moku", "weka"];
+    const objects = ["tomo", "soweli", "kili", "ilo", "ma", "mun", "suno", "jan"];
+    const places = ["lon ma", "lon mun", "lon tomo suli", "kepeken ilo", "sama waso"];
+    const starters = [
+      "jan [A] li [V] e [B] [P].",
+      "tenpo ni la jan [A] li [V] [P].",
+      "mi wile [V] e [B] [P].",
+      "sina o [V] e [B] [P]."
+    ];
+
+    const simpleTranslations = {
+      jan: "person", soweli: "animal", meli: "woman", mije: "man", kili: "fruit/vegetable",
+      tomo: "house", ilo: "tool", suno: "sun", tawa: "go/travel", pali: "work/build",
+      lukin: "look/see", kute: "listen", kama: "come/become", awen: "stay/wait",
+      moku: "eat", weka: "away/remove", ma: "land", mun: "moon", kepeken: "use",
+      sama: "like/similar", waso: "bird", tenpo: "time", ni: "this", la: "contextual",
+      mi: "I", sina: "you", o: "imperative", e: "(marks direct object)", lon: "at/in"
+    };
+
+    const glyphMap = {
+      jan: "👤", soweli: "🐶", meli: "👩", mije: "👨", kili: "🥝", tomo: "🏠", ilo: "🔧",
+      suno: "🌞", tawa: "🏃", pali: "⚒️", lukin: "👁️", kute: "👂", kama: "📥", awen: "⏳",
+      moku: "🍽️", weka: "🚫", ma: "🌍", mun: "🌙", kepeken: "🔧", sama: "➰", waso: "🐦"
+    };
+
+    let currentPrompt = "";
+    let currentTranslation = "";
+
+    function getRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function translateWord(word) {
+      return simpleTranslations[word] || word;
+    }
+
+    function generatePrompt() {
+      const A = getRandom(subjects);
+      const V = getRandom(verbs);
+      const B = getRandom(objects);
+      const P = getRandom(places);
+      const template = getRandom(starters);
+
+      currentPrompt = template
+        .replace("[A]", A)
+        .replace("[V]", V)
+        .replace("[B]", B)
+        .replace("[P]", P);
+
+      const allWords = currentPrompt
+        .replace(/[^\w\s]/gi, '')
+        .split(" ")
+        .map(w => translateWord(w))
+        .join(" ");
+
+      currentTranslation = allWords.charAt(0).toUpperCase() + allWords.slice(1) + ".";
+
+      document.getElementById("prompt").innerText = currentPrompt;
+      document.getElementById("translation").style.display = "none";
+
+      // Show glyphs based on most important 3 words
+      let words = currentPrompt.match(/\b\w+\b/g);
+      let mainGlyphs = words
+        .filter((w, i) => i < 6) // limit to early words
+        .map(w => glyphMap[w] || "")
+        .filter(g => g)
+        .slice(0, 3)
+        .join("");
+
+      document.getElementById("glyphs").innerText = mainGlyphs;
+    }
+
+    function toggleTranslation() {
+      const trans = document.getElementById("translation");
+      trans.innerText = currentTranslation;
+      trans.style.display = trans.style.display === "none" ? "block" : "none";
+    }
+
+    function savePrompt() {
+      if (!currentPrompt) return;
+      const saved = JSON.parse(localStorage.getItem("tp_prompts") || "[]");
+      saved.unshift({ prompt: currentPrompt, translation: currentTranslation });
+      localStorage.setItem("tp_prompts", JSON.stringify(saved.slice(0, 20))); // Keep last 20
+      renderSaved();
+    }
+
+    function renderSaved() {
+      const container = document.getElementById("savedList");
+      container.innerHTML = "";
+      const saved = JSON.parse(localStorage.getItem("tp_prompts") || "[]");
+      saved.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<strong>${item.prompt}</strong><br><em>${item.translation}</em>`;
+        container.appendChild(div);
+      });
+    }
+
+    renderSaved();
+  </script>
+</body>
+</html>
