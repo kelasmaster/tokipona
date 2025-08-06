@@ -132,7 +132,7 @@
 
         button.grammar-btn {
             background-color: var(--success-color);
-            display: none; /* Hidden by default */
+            display: none;
         }
 
         .language-toggle {
@@ -295,7 +295,6 @@
             text-decoration: none;
         }
         
-        /* Grammar check results */
         .grammar-results {
             margin-top: 20px;
             padding: 15px;
@@ -344,7 +343,6 @@
             padding: 0 2px;
         }
         
-        /* Mobile specific styles */
         @media (max-width: 480px) {
             .output-actions button, 
             .output-actions a {
@@ -359,7 +357,7 @@
     </style>
 </head>
 <body>
-     <header>
+    <header>
         <div class="container">
             <h1>Toki Pona Translator</h1>
             <p class="subtitle">Translate between Toki Pona, English, and Indonesian with Grammar Check</p>
@@ -381,6 +379,7 @@
                 <div class="button-group">
                     <button id="translateBtn">Translate</button>
                     <button id="grammarCheckBtn" class="grammar-btn">Grammar Check</button>
+                    <button id="randomTokiBtn" style="display: none;">Random Toki Pona</button>
                 </div>
                 <div class="button-group" id="symbolButtons" style="display: none;">
                     <button id="sitelenPonaBtn">Sitelen Pona Symbol</button>
@@ -432,7 +431,6 @@
             <p>© <span id="currentYear"></span> - Toki Pona Translator with Grammar Check</p>
         </div>
     </footer>
-
 
     <script>
         // Current year for footer
@@ -580,10 +578,21 @@
             "ni li pona": ["this is good", "ini bagus"],
             "mi lukin e sina": ["I see you", "saya melihatmu"],
             "sina lon seme?": ["where are you?", "kamu di mana?"],
-            "mi lon ma tomo": ["I'm in the city", "saya di kota"]
+            "mi lon ma tomo": ["I'm in the city", "saya di kota"],
+            "mi moku e kili": ["I eat fruit", "saya makan buah"],
+            "sina wile tawa tomo": ["you want to go home", "kamu ingin pulang"],
+            "ona li jan pona mi": ["they are my friend", "dia adalah teman saya"],
+            "telo ni li lete": ["this water is cold", "air ini dingin"],
+            "suno li suli": ["the sun is big", "matahari besar"],
+            "mi pali e ni": ["I make this", "saya membuat ini"],
+            "sina ken toki": ["you can speak", "kamu bisa bicara"],
+            "mi wile e moku": ["I want food", "saya ingin makanan"],
+            "jan lili li musi": ["the child plays", "anak kecil bermain"],
+            "tomo mi li suli": ["my house is big", "rumah saya besar"],
+            "soweli li moku e kili": ["the animal eats fruit", "hewan makan buah"]
         };
 
-       // Toki Pona grammar rules and word lists
+        // Toki Pona grammar rules and word lists
         const officialWords = [
             'a', 'ala', 'ale', 'anpa', 'ante', 'anu', 'awen', 'e', 'en', 'esun', 'ijo', 'ike', 'ilo', 'insa', 
             'jaki', 'jan', 'jelo', 'jo', 'kala', 'kalama', 'kama', 'kasi', 'ken', 'kepeken', 'kili', 'kin', 
@@ -602,9 +611,183 @@
             'misikeke', 'monsuta', 'n', 'namako', 'oko', 'pake', 'pata', 'po', 'polinpin', 'pom', 'pop', 'samu', 
             'soto', 'te', 'tiki', 'tonsi', 'u', 'um', 'unu', 'wa', 'wuwojiti', 'yupekosi'
         ];
+
+        // Random Toki Pona generator
+        const subjects = ["jan", "soweli", "meli", "mije", "kili", "tomo", "ilo", "suno"];
+        const verbs = ["tawa", "pali", "lukin", "kute", "kama", "awen", "moku", "weka"];
+        const objects = ["tomo", "soweli", "kili", "ilo", "ma", "mun", "suno", "jan"];
+        const places = ["lon ma", "lon mun", "lon tomo suli", "kepeken ilo", "sama waso"];
+        const starters = [
+            "jan [A] li [V] e [B] [P].",
+            "tenpo ni la jan [A] li [V] [P].",
+            "mi wile [V] e [B] [P].",
+            "sina o [V] e [B] [P]."
+        ];
+
+        function getRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function generateRandomTokiPona() {
+            const A = getRandom(subjects);
+            const V = getRandom(verbs);
+            const B = getRandom(objects);
+            const P = getRandom(places);
+            const template = getRandom(starters);
+
+            const prompt = template
+                .replace("[A]", A)
+                .replace("[V]", V)
+                .replace("[B]", B)
+                .replace("[P]", P);
+
+            document.getElementById("inputText").value = prompt;
+        }
+
         // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // [Previous DOM element declarations remain the same]
+            // DOM elements
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const translateBtn = document.getElementById('translateBtn');
+            const grammarCheckBtn = document.getElementById('grammarCheckBtn');
+            const randomTokiBtn = document.getElementById('randomTokiBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const suggestions = document.getElementById('suggestions');
+            const inputLangDisplay = document.getElementById('inputLangDisplay');
+            const outputLangDisplay = document.getElementById('outputLangDisplay');
+            const symbolButtons = document.getElementById('symbolButtons');
+            const sitelenPonaBtn = document.getElementById('sitelenPonaBtn');
+            const sitelenPonaText = document.getElementById('sitelenPonaText');
+            const downloadSitelenPona = document.getElementById('downloadSitelenPona');
+            const grammarResults = document.getElementById('grammarResults');
+            const grammarResultsContent = document.getElementById('grammarResultsContent');
+
+            // Input language buttons
+            const setInputToki = document.getElementById('setInputToki');
+            const setInputEnglish = document.getElementById('setInputEnglish');
+            const setInputIndonesian = document.getElementById('setInputIndonesian');
+
+            // Output language buttons
+            const outputEnglish = document.getElementById('outputEnglish');
+            const outputIndonesian = document.getElementById('outputIndonesian');
+            const outputTokiPona = document.getElementById('outputTokiPona');
+
+            // State variables
+            let currentInputLanguage = 'toki'; // 'toki', 'en', 'id'
+            let currentOutputLanguage = 'en'; // 'en', 'id', 'toki'
+
+            // Set input language
+            function setInputLanguage(lang) {
+                currentInputLanguage = lang;
+                inputLangDisplay.textContent = 
+                    lang === 'toki' ? 'Toki Pona' : 
+                    lang === 'en' ? 'English' : 'Indonesian';
+                
+                // Update button states
+                setInputToki.classList.toggle('active', lang === 'toki');
+                setInputEnglish.classList.toggle('active', lang === 'en');
+                setInputIndonesian.classList.toggle('active', lang === 'id');
+                
+                // Update placeholder text
+                inputText.placeholder = lang === 'toki' ? 'Enter Toki Pona text here...' : 
+                                       lang === 'en' ? 'Enter English text here...' : 
+                                       'Enter Indonesian text here...';
+                
+                // Show/hide symbol buttons based on input language
+                if (lang === 'toki') {
+                    symbolButtons.style.display = 'flex';
+                    grammarCheckBtn.style.display = 'inline-block';
+                    randomTokiBtn.style.display = 'inline-block';
+                } else {
+                    symbolButtons.style.display = 'none';
+                    grammarCheckBtn.style.display = 'none';
+                    randomTokiBtn.style.display = 'none';
+                    document.getElementById('symbolConverters').classList.remove('active');
+                    grammarResults.style.display = 'none';
+                }
+            }
+
+            // Set output language
+            function setOutputLanguage(lang) {
+                currentOutputLanguage = lang;
+                outputLangDisplay.textContent = 
+                    lang === 'en' ? 'English' : 
+                    lang === 'id' ? 'Indonesian' : 'Toki Pona';
+                
+                // Update button states
+                outputEnglish.classList.toggle('active', lang === 'en');
+                outputIndonesian.classList.toggle('active', lang === 'id');
+                outputTokiPona.classList.toggle('active', lang === 'toki');
+                
+                // If there's already a translation, update it
+                if (outputText.value) {
+                    translateText();
+                }
+            }
+
+            // Initialize languages
+            setInputLanguage('toki');
+            setOutputLanguage('en');
+
+            // Event listeners for input language buttons
+            setInputToki.addEventListener('click', () => setInputLanguage('toki'));
+            setInputEnglish.addEventListener('click', () => setInputLanguage('en'));
+            setInputIndonesian.addEventListener('click', () => setInputLanguage('id'));
+
+            // Event listeners for output language buttons
+            outputEnglish.addEventListener('click', () => setOutputLanguage('en'));
+            outputIndonesian.addEventListener('click', () => setOutputLanguage('id'));
+            outputTokiPona.addEventListener('click', () => setOutputLanguage('toki'));
+
+            // Event listener for random Toki Pona button
+            randomTokiBtn.addEventListener('click', generateRandomTokiPona);
+
+            // Show word suggestions based on input
+            inputText.addEventListener('input', function() {
+                const text = this.value;
+                const lastWord = text.split(/\s+/).pop().toLowerCase();
+                
+                if (lastWord.length < 2) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                // Filter dictionary for matches
+                const matches = Object.keys(nimi).filter(word => 
+                    word.toLowerCase().startsWith(lastWord))
+                    .slice(0, 10); // Limit to 10 suggestions
+                
+                if (matches.length === 0) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+                
+                // Display suggestions
+                suggestions.innerHTML = '';
+                matches.forEach(word => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.textContent = word;
+                    div.addEventListener('click', () => {
+                        const parts = text.split(/\s+/);
+                        parts[parts.length - 1] = word;
+                        this.value = parts.join(' ') + ' ';
+                        suggestions.style.display = 'none';
+                        this.focus();
+                    });
+                    suggestions.appendChild(div);
+                });
+                
+                suggestions.style.display = 'block';
+            });
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputText) {
+                    suggestions.style.display = 'none';
+                }
+            });
 
             // Improved translation functions
             function translateTokiPona(text, targetLang) {
